@@ -1,0 +1,127 @@
+package com.alotra.controller;
+
+
+import com.alotra.dto.ProductDTO; // Thêm import
+import com.alotra.service.ProductService; // Thêm import
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import java.util.List; // Thêm import
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+
+import com.alotra.dto.ProductDTO;
+import com.alotra.entity.KhachHang;
+import com.alotra.service.KhachHangService;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Controller
+public class HomeController {
+	 @Autowired
+	    private ProductService productService;
+    @Autowired
+    private KhachHangService khachHangService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @GetMapping("/")
+    public String homePage(Model model) {
+        model.addAttribute("pageTitle", "AloTra - Trang Chủ");
+        // Sau này bạn có thể thêm dữ liệu sản phẩm nổi bật vào đây
+     // Lấy danh sách sản phẩm bán chạy từ service
+        List<ProductDTO> bestSellers = productService.findBestSellers();
+
+        // Đưa danh sách vào model với tên là "bestSellers" để HTML có thể dùng
+        model.addAttribute("bestSellers", bestSellers);
+        return "home/index"; // Trả về tên file template (home/index.html)
+    }
+
+    // Tạm thời tạo các controller cơ bản cho các link trên header/footer để tránh lỗi 404
+    @GetMapping("/products")
+    public String productsPage(Model model) {
+        model.addAttribute("pageTitle", "Sản Phẩm của AloTra");
+        return "products/product_list"; // Sẽ tạo trang này sau
+    }
+
+    @GetMapping("/about")
+    public String aboutPage(Model model) {
+        model.addAttribute("pageTitle", "Về Chúng Tôi");
+        return "about/about"; // Sẽ tạo trang này sau
+    }
+
+    @GetMapping("/contact")
+    public String contactPage(Model model) {
+        model.addAttribute("pageTitle", "Liên Hệ AloTra");
+        return "contact/contact"; // Sẽ tạo trang này sau
+    }
+
+    @GetMapping("/login")
+    public String loginPage(Model model) {
+        model.addAttribute("pageTitle", "Đăng Nhập");
+        return "auth/login"; // Sẽ tạo trang này sau
+    }
+
+    @GetMapping("/cart")
+    public String cartPage(Model model) {
+        model.addAttribute("pageTitle", "Giỏ Hàng");
+        return "cart/cart"; // Sẽ tạo trang này sau
+    }
+
+    @GetMapping("/policy")
+    public String policyPage(Model model) {
+        model.addAttribute("pageTitle", "Chính Sách");
+        return "policy/policy"; // Sẽ tạo trang này sau
+    }
+
+    @GetMapping("/register")
+    public String registerPage(Model model) {
+        model.addAttribute("pageTitle", "Đăng Ký Tài Khoản");
+        model.addAttribute("khachHang", new KhachHang());
+        return "auth/register";
+    }
+
+    @PostMapping("/register")
+    public String processRegister(@ModelAttribute("khachHang") KhachHang khachHang,
+                                  BindingResult bindingResult,
+                                  @RequestParam("confirmPassword") String confirmPassword,
+                                  Model model) {
+        model.addAttribute("pageTitle", "Đăng Ký Tài Khoản");
+        // Validate password confirmation
+        if (khachHang.getPasswordHash() == null || !khachHang.getPasswordHash().equals(confirmPassword)) {
+            bindingResult.rejectValue("passwordHash", "error.khachHang", "Mật khẩu xác nhận không khớp.");
+        }
+        // Check for duplicate username/email/phone
+        if (khachHangService.findByUsername(khachHang.getUsername()) != null) {
+            bindingResult.rejectValue("username", "error.khachHang", "Tên đăng nhập đã được sử dụng.");
+        }
+        if (khachHangService.findByEmail(khachHang.getEmail()) != null) {
+            bindingResult.rejectValue("email", "error.khachHang", "Email đã được sử dụng.");
+        }
+        if (khachHangService.findByPhone(khachHang.getPhone()) != null) {
+            bindingResult.rejectValue("phone", "error.khachHang", "Số điện thoại đã được sử dụng.");
+        }
+        if (bindingResult.hasErrors()) {
+            return "auth/register";
+        }
+        // Hash password and set status
+        khachHang.setPasswordHash(passwordEncoder.encode(khachHang.getPasswordHash()));
+        khachHang.setStatus(1); // 1 = active
+        khachHangService.save(khachHang);
+        model.addAttribute("message", "Đăng ký thành công! Vui lòng đăng nhập.");
+        return "redirect:/login";
+    }
+
+    @GetMapping("/profile")
+    public String profilePage(Model model) {
+        model.addAttribute("pageTitle", "Thông Tin Tài Khoản");
+        return "profile/profile"; // Sẽ tạo trang này sau
+    }
+}

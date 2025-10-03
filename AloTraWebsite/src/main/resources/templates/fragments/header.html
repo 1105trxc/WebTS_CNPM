@@ -1,0 +1,73 @@
+<!-- Header Fragment -->
+<th:block th:fragment="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <!-- Top header: Logo, search, user actions -->
+    <nav class="navbar navbar-expand-lg navbar-light navbar-top">
+        <div class="container">
+            <!-- Logo -->
+            <a class="navbar-brand" th:href="@{/}">
+                <img th:src="@{/images/logo.jpg}" alt="AloTra Logo" style="height: 60px;">
+            </a>
+
+            <!-- Search bar -->
+            <form class="d-flex mx-auto search-bar" role="search">
+                <input class="form-control me-2" type="search" placeholder="Bạn muốn mua gì..." aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+
+            <!-- User actions -->
+            <ul class="navbar-nav user-actions ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-motorcycle"></i> Chọn Phương Thức Nhận Hàng</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="fas fa-envelope"></i></a>
+                </li>
+
+                <!-- Anonymous -->
+                <li class="nav-item" sec:authorize="isAnonymous()">
+                    <a class="nav-link" th:href="@{/login}">
+                        <i class="fas fa-user"></i> Đăng nhập
+                    </a>
+                </li>
+
+                <!-- Authenticated dropdown -->
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Xin chào, <span sec:authentication="name"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" th:href="@{/account/profile}">Thông tin cá nhân</a></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post">
+                                <button type="submit" class="dropdown-item">Đăng xuất</button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Bottom header: Main navigation menu -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-bottom">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavBottom" aria-controls="navbarNavBottom" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNavBottom">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" th:href="@{/}">TRANG CHỦ</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/products}">MENU</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/products}">SẢN PHẨM ĐÓNG GÓI</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/about}">VỀ CHÚNG TÔI</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/policy}">KHUYẾN MÃI</a></li>
+                    <li class="nav-item"><a class="nav-link" th:href="@{/account/profile}">HỘI VIÊN</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</th:block>
+<!-- End of Header Fragment -->

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/default_layout :: body(~{::content}, null, null)}">
+<head>
+    <title th:replace="~{layouts/default_layout :: title(pageTitle='Đăng ký tài khoản')}"></title>
+</head>
+<body>
+<div class="container">
+    <th:block th:fragment="content">
+        <h2>Đăng ký tài khoản</h2>
+        <form th:action="@{/register}" th:object="${khachHang}" method="post">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <!-- Validation summary: only check fields when khachHang exists -->
+            <div th:if="${khachHang != null} and ${#fields.hasErrors()}" class="error">
+                <p th:each="err : ${#fields.errors('*')}" th:text="${err}"></p>
+            </div>
+
+            <!-- Username -->
+            <div>
+                <label for="username">Tên đăng nhập:</label>
+                <input type="text" id="username" th:field="*{username}" required />
+            </div>
+
+            <!-- Full name -->
+            <div>
+                <label for="fullName">Họ tên:</label>
+                <input type="text" id="fullName" th:field="*{fullName}" required />
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email">Email:</label>
+                <input type="email" id="email" th:field="*{email}" required />
+            </div>
+
+            <!-- Phone -->
+            <div>
+                <label for="phone">Số điện thoại:</label>
+                <input type="text" id="phone" th:field="*{phone}" required />
+            </div>
+
+            <!-- Password bound to entity field -->
+            <div>
+                <label for="passwordHash">Mật khẩu:</label>
+                <input type="password" id="passwordHash" th:field="*{passwordHash}" required />
+            </div>
+
+            <!-- Confirm Password (not bound) -->
+            <div>
+                <label for="confirmPassword">Nhập lại mật khẩu:</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required />
+            </div>
+
+            <div>
+                <button type="submit">Đăng ký</button>
+            </div>
+        </form>
+        <p>Đã có tài khoản? <a th:href="@{/login}">Đăng nhập</a></p>
+    </th:block>
+</div>
+</body>
+</html>

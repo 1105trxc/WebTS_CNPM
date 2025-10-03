@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:fragment="body(content, additionalCss=null, additionalJs=null)">
+<head>
+    <meta charset="UTF-8">
+    <!-- Page title from model or fallback -->
+    <title th:text="${pageTitle} ?: 'AloTra'"></title>
+
+    <!-- Vendor CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+
+    <!-- Optional page-level CSS hook -->
+    <th:block th:replace="${additionalCss}"></th:block>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <!-- Simple header for account pages -->
+    <header class="bg-light p-3" th:fragment="header">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light">
+                <a class="navbar-brand" th:href="@{/}">AloTra</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main content placeholder -->
+    <main class="container my-4 flex-grow-1">
+        <div th:replace="${content}">
+            <!-- Default content fallback -->
+            <p>Nội dung trang...</p>
+        </div>
+    </main>
+
+    <!-- Simple footer for account pages -->
+    <footer class="bg-light p-3 mt-auto" th:fragment="footer">
+        <div class="container text-center">
+            <p>&copy; 2025 AloTra. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Vendor JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Optional page-level JS hook -->
+    <th:block th:replace="${additionalJs}"></th:block>
+</body>
+</html>

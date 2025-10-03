@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(
+                    pageTitle=${topping.id == null ? 'Thêm Mới Topping' : 'Sửa Topping'},
+                    pageContent=~{::pageContent}
+                  )}">
+
+<body>
+    <div class="page-content" th:fragment="pageContent">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0" th:text="${topping.id == null ? 'Thêm Topping mới' : 'Sửa Topping'}"></h5>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/admin/toppings/save}" th:object="${topping}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" th:field="*{id}" />
+                    <!-- Preserve existing imageUrl when no new file uploaded -->
+                    <input type="hidden" th:field="*{imageUrl}" />
+
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Tên Topping</label>
+                                <input type="text" class="form-control" th:field="*{name}" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Giá thêm (VNĐ)</label>
+                                <input type="number" class="form-control" th:field="*{extraPrice}" min="0" step="1000" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái</label>
+                                <select class="form-select" th:field="*{status}">
+                                    <option th:value="1">Đang bán</option>
+                                    <option th:value="0">Ngừng bán</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Ảnh topping</label>
+                            <div class="mb-2">
+                                <img id="previewImg" th:src="${topping.imageUrl != null ? topping.imageUrl : '/images/placeholder.png'}" alt="Xem trước ảnh" class="img-thumbnail" style="max-height: 160px; object-fit: cover;" />
+                            </div>
+                            <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="previewImage(event)" />
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Lưu lại</button>
+                        <a th:href="@{/admin/toppings}" class="btn btn-secondary">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function previewImage(event) {
+                const [file] = event.target.files;
+                if (file) {
+                    const img = document.getElementById('previewImg');
+                    img.src = URL.createObjectURL(file);
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>
