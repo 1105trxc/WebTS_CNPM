@@ -35,7 +35,7 @@ public class UsersAdminController {
                         @RequestParam(value = "roleE", required = false) Integer roleE,
                         @RequestParam(value = "statusE", required = false) Integer statusE) {
         List<KhachHang> customers = khService.search(kwC, statusC);
-        List<NhanVien> employees = nvService.search(kwE, roleE, statusE);
+        List<NhanVien> employees = nvService.search(kwE, roleE, statusE); // excludes trashed by repo query
         model.addAttribute("pageTitle", "Người dùng");
         model.addAttribute("currentPage", "users");
         model.addAttribute("tab", tab);
@@ -116,8 +116,10 @@ public class UsersAdminController {
     }
 
     @GetMapping("/employees/delete/{id}")
-    public String deleteEmployee(@PathVariable Integer id){
-        nvService.deleteById(id);
+    public String deleteEmployee(@PathVariable Integer id, RedirectAttributes ra){
+        // Always soft-delete to trash; no FK risk here. Hard delete is only allowed from Trash page.
+        nvService.softDeleteToTrash(id);
+        ra.addFlashAttribute("msg", "Đã chuyển nhân viên vào thùng rác.");
         return "redirect:/admin/users?tab=employees";
     }
 

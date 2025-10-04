@@ -3,6 +3,7 @@ package com.alotra.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "NhanVien")
@@ -39,6 +40,10 @@ public class NhanVien {
     @Column(name = "TrangThai", nullable = false)
     private Integer status = 1;
 
+    // Soft delete timestamp (null = active)
+    @Column(name = "DeletedAt")
+    private LocalDateTime deletedAt;
+
     @Transient
     private String plainPassword; // for form input only
 
@@ -65,4 +70,6 @@ public class NhanVien {
     public void setPlainPassword(String plainPassword) { this.plainPassword = plainPassword; }
     public String getConfirmPassword() { return confirmPassword; }
     public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

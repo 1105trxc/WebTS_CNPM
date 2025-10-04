@@ -77,6 +77,10 @@
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'settings'} ? 'active-custom' : ''">
 					<i class="fas fa-cog me-2"></i> Cài đặt
+				</a> <a th:href="@{/admin/trash}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'trash'} ? 'active-custom' : ''">
+					<i class="fas fa-trash-alt me-2"></i> Thùng rác
 				</a>
 			</div>
 		</div>

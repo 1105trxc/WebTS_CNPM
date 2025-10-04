@@ -1,23 +1,17 @@
 // 📁 com/alotra/entity/Size.java
 package com.alotra.entity;
 
-import jakarta.persistence.*;
+// This class was a duplicate mapping of table SizeSanPham, which caused
+// Hibernate to try ALTER COLUMN (length/type) at startup. We convert it
+// to a simple POJO (no @Entity) so only SizeSanPham is used by JPA.
 
-@Entity
-@Table(name = "SizeSanPham")
+// import jakarta.persistence.*; // no longer needed
+
 public class Size {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MaSize")
     private Integer id;
-
-    @Column(name = "TenSize", nullable = false, unique = true)
     private String name;
-
-    @Column(name = "TrangThai", nullable = false)
     private Integer status;
 
-    // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public String getName() { return name; }

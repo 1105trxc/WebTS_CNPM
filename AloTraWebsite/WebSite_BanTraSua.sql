@@ -37,7 +37,8 @@ GO
 CREATE TABLE dbo.DanhMucSanPham (
     MaDM INT IDENTITY(1,1) PRIMARY KEY,
     TenDM NVARCHAR(255) NOT NULL UNIQUE,
-    MoTa NVARCHAR(MAX) NULL
+    MoTa NVARCHAR(MAX) NULL,
+    DeletedAt DATETIME2 NULL
 );
 
 CREATE TABLE dbo.SanPham (
@@ -46,6 +47,8 @@ CREATE TABLE dbo.SanPham (
     TenSP NVARCHAR(255) NOT NULL,
     MoTa NVARCHAR(MAX) NULL,
     TrangThai TINYINT NOT NULL DEFAULT 1 CHECK (TrangThai IN (0,1)), -- 0: Ngừng bán, 1: Đang bán
+    UrlAnh NVARCHAR(500) NULL,
+    DeletedAt DATETIME2 NULL,
     CONSTRAINT FK_SanPham_DanhMuc FOREIGN KEY (MaDM) REFERENCES dbo.DanhMucSanPham(MaDM)
 );
 
@@ -72,7 +75,9 @@ CREATE TABLE dbo.Topping (
     MaTopping INT IDENTITY(1,1) PRIMARY KEY,
     TenTopping NVARCHAR(255) NOT NULL UNIQUE,
     GiaThem DECIMAL(10,2) NOT NULL CHECK (GiaThem >= 0),
-    TrangThai TINYINT NOT NULL DEFAULT 1 CHECK (TrangThai IN (0,1))
+    TrangThai TINYINT NOT NULL DEFAULT 1 CHECK (TrangThai IN (0,1)),
+    UrlAnh NVARCHAR(500) NULL,
+    DeletedAt DATETIME2 NULL
 );
 
 /* Khuyến mãi (giữ như cũ, áp theo Sản phẩm; có thể nâng cấp để áp theo Biến thể nếu cần) */
@@ -114,7 +119,8 @@ CREATE TABLE dbo.NhanVien (
     TenNV NVARCHAR(255) NOT NULL,
     VaiTro TINYINT NOT NULL CHECK (VaiTro IN (1,2)), -- 1: Chủ cửa hàng, 2: Nhân viên
     SoDienThoai NVARCHAR(20) NULL UNIQUE,
-    TrangThai TINYINT NOT NULL DEFAULT 1 CHECK (TrangThai IN (0,1))
+    TrangThai TINYINT NOT NULL DEFAULT 1 CHECK (TrangThai IN (0,1)),
+    DeletedAt DATETIME2 NULL
 );
 
 /* Giỏ hàng (1 khách tối đa 1 giỏ ACTIVE) */

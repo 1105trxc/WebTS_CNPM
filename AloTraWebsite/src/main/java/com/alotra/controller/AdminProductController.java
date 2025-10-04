@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Controller
@@ -42,7 +43,7 @@ public class AdminProductController {
 
     @GetMapping
     public String list(Model model) {
-        List<Product> items = productRepository.findAll();
+        List<Product> items = productRepository.findByDeletedAtIsNull();
         model.addAttribute("pageTitle", "Sản phẩm");
         model.addAttribute("currentPage", "products");
         model.addAttribute("items", items);
@@ -73,7 +74,7 @@ public class AdminProductController {
         model.addAttribute("pageTitle", "Thêm sản phẩm");
         model.addAttribute("currentPage", "products");
         model.addAttribute("product", new Product());
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
         return "admin/product-form";
     }
 
@@ -88,7 +89,7 @@ public class AdminProductController {
         model.addAttribute("pageTitle", "Sửa sản phẩm");
         model.addAttribute("currentPage", "products");
         model.addAttribute("product", p);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
         model.addAttribute("variants", variantRepository.findByProduct(p));
         model.addAttribute("sizes", sizeRepository.findAll());
         return "admin/product-form";
@@ -120,12 +121,12 @@ public class AdminProductController {
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Integer id, RedirectAttributes ra) {
-        if (!productRepository.existsById(id)) {
-            ra.addFlashAttribute("error", "Sản phẩm không tồn tại.");
-        } else {
-            productRepository.deleteById(id);
-            ra.addFlashAttribute("message", "Đã xóa sản phẩm.");
-        }
+        productRepository.findById(id).ifPresent(p -> {
+            p.setDeletedAt(LocalDateTime.now());
+            p.setStatus(0);
+            productRepository.save(p);
+        });
+        ra.addFlashAttribute("message", "Đã chuyển sản phẩm vào thùng rác.");
         return "redirect:/admin/products";
     }
 

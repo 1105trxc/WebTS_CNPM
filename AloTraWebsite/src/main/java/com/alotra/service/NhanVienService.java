@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,5 +70,21 @@ public class NhanVienService {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < len; i++) sb.append(dict.charAt(r.nextInt(dict.length())));
         return sb.toString();
+    }
+
+    // Soft delete to trash: mark DeletedAt and lock account
+    public void softDeleteToTrash(Integer id) {
+        repo.findById(id).ifPresent(nv -> {
+            nv.setDeletedAt(LocalDateTime.now());
+            nv.setStatus(0);
+            repo.save(nv);
+        });
+    }
+
+    public void restoreFromTrash(Integer id) {
+        repo.findById(id).ifPresent(nv -> {
+            nv.setDeletedAt(null);
+            repo.save(nv);
+        });
     }
 }

@@ -2,6 +2,7 @@ package com.alotra.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Topping")
@@ -23,6 +24,10 @@ public class Topping {
     @Column(name = "UrlAnh")
     private String imageUrl;
 
+    // Soft delete timestamp (null = active)
+    @Column(name = "DeletedAt")
+    private LocalDateTime deletedAt;
+
     // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -34,4 +39,6 @@ public class Topping {
     public void setStatus(Integer status) { this.status = status; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

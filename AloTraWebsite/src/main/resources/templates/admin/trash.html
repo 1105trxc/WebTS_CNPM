@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(pageTitle='Thùng rác', pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <h5 class="mb-3">Danh mục đã xóa</h5>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped table-hover align-middle">
+            <thead><tr><th>#</th><th>Tên</th><th class="text-end">Hành động</th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${categories}">
+                <td th:text="${c.id}"></td>
+                <td th:text="${c.name}"></td>
+                <td class="text-end">
+                    <a th:href="@{'/admin/trash/categories/' + ${c.id} + '/restore'}" class="btn btn-sm btn-outline-primary">Khôi phục</a>
+                    <a th:href="@{'/admin/trash/categories/' + ${c.id} + '/delete'}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa vĩnh viễn danh mục này?')">Xóa vĩnh viễn</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(categories)}"><td colspan="3" class="text-center">Không có bản ghi.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h5 class="mb-3">Sản phẩm đã xóa</h5>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped table-hover align-middle">
+            <thead><tr><th>#</th><th>Tên</th><th>Danh mục</th><th class="text-end">Hành động</th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${products}">
+                <td th:text="${p.id}"></td>
+                <td th:text="${p.name}"></td>
+                <td th:text="${p.category != null ? p.category.name : ''}"></td>
+                <td class="text-end">
+                    <a th:href="@{'/admin/trash/products/' + ${p.id} + '/restore'}" class="btn btn-sm btn-outline-primary">Khôi phục</a>
+                    <a th:href="@{'/admin/trash/products/' + ${p.id} + '/delete'}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa vĩnh viễn sản phẩm này?')">Xóa vĩnh viễn</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(products)}"><td colspan="4" class="text-center">Không có bản ghi.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h5 class="mb-3">Topping đã xóa</h5>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped table-hover align-middle">
+            <thead><tr><th>#</th><th>Tên</th><th class="text-end">Hành động</th></tr></thead>
+            <tbody>
+            <tr th:each="t : ${toppings}">
+                <td th:text="${t.id}"></td>
+                <td th:text="${t.name}"></td>
+                <td class="text-end">
+                    <a th:href="@{'/admin/trash/toppings/' + ${t.id} + '/restore'}" class="btn btn-sm btn-outline-primary">Khôi phục</a>
+                    <a th:href="@{'/admin/trash/toppings/' + ${t.id} + '/delete'}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa vĩnh viễn topping này?')">Xóa vĩnh viễn</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(toppings)}"><td colspan="3" class="text-center">Không có bản ghi.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h5 class="mb-3">Nhân viên đã xóa</h5>
+    <div class="table-responsive mb-2">
+        <table class="table table-striped table-hover align-middle">
+            <thead><tr><th>#</th><th>Tài khoản</th><th>Họ tên</th><th>Email</th><th class="text-end">Hành động</th></tr></thead>
+            <tbody>
+            <tr th:each="e : ${employees}">
+                <td th:text="${e.id}"></td>
+                <td th:text="${e.username}"></td>
+                <td th:text="${e.fullName}"></td>
+                <td th:text="${e.email}"></td>
+                <td class="text-end">
+                    <a th:href="@{'/admin/trash/employees/' + ${e.id} + '/restore'}" class="btn btn-sm btn-outline-primary">Khôi phục</a>
+                    <a th:href="@{'/admin/trash/employees/' + ${e.id} + '/delete'}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa vĩnh viễn nhân viên này?')">Xóa vĩnh viễn</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(employees)}"><td colspan="5" class="text-center">Không có bản ghi.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
