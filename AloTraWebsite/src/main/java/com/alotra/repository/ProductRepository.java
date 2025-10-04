@@ -15,11 +15,13 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
         Integer getId();
         String getName();
         BigDecimal getPrice();
+        String getImageUrl();
     }
 
-    @Query(value = "SELECT sp.MaSP AS id, sp.TenSP AS name, MIN(b.GiaBan) AS price " +
-            "FROM SanPham sp JOIN BienTheSanPham b ON b.MaSP = sp.MaSP " +
+    @Query(value = "SELECT sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, MIN(b.GiaBan) AS price " +
+            "FROM SanPham sp LEFT JOIN BienTheSanPham b ON b.MaSP = sp.MaSP " +
             "WHERE sp.TrangThai = 1 " +
-            "GROUP BY sp.MaSP, sp.TenSP", nativeQuery = true)
+            "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
+            "ORDER BY sp.MaSP DESC", nativeQuery = true)
     List<BestSellerProjection> findBestSellersNative();
 }

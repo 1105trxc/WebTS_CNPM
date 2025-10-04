@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(pageTitle=${item.id == null ? 'Thêm sự kiện' : 'Sửa sự kiện'}, pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent">
+    <div class="card">
+        <div class="card-body">
+            <form th:action="@{/admin/promotions/save}" th:object="${item}" method="post" class="row g-3">
+                <input type="hidden" th:field="*{id}">
+                <div class="col-md-6">
+                    <label class="form-label">Tên sự kiện</label>
+                    <input class="form-control" th:field="*{name}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Trạng thái</label>
+                    <select class="form-select" th:field="*{status}">
+                        <option th:value="1">Hoạt động</option>
+                        <option th:value="0">Ngừng</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Ngày bắt đầu</label>
+                    <input type="date" class="form-control" th:field="*{startDate}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Ngày kết thúc</label>
+                    <input type="date" class="form-control" th:field="*{endDate}" required>
+                    <div class="text-danger small" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Mô tả</label>
+                    <textarea class="form-control" th:field="*{description}" rows="3"></textarea>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Lưu</button>
+                    <a th:href="@{/admin/promotions}" class="btn btn-secondary">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

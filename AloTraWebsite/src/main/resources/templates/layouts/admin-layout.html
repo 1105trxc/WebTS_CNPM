@@ -65,6 +65,10 @@
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'orders'} ? 'active-custom' : ''">
 					<i class="fas fa-receipt me-2"></i> Đơn hàng
+				</a> <a th:href="@{/admin/promotions}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'promotions'} ? 'active-custom' : ''">
+					<i class="fas fa-tags me-2"></i> Sự kiện khuyến mãi
 				</a> <a th:href="@{/admin/marketing}"
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'marketing'} ? 'active-custom' : ''">

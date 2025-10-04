@@ -175,21 +175,4 @@ public class AdminController {
         model.addAttribute("currentPage", "settings");
         return "admin/settings";
     }
-
-    @GetMapping("/users")
-    public String showUsers(Model model) {
-        model.addAttribute("pageTitle", "Người dùng");
-        model.addAttribute("currentPage", "users");
-        return "admin/users";
-    }
-
-    @GetMapping("/users/details/{id}")
-    public String showUserDetails(@PathVariable("id") Integer id, Model model) {
-        model.addAttribute("pageTitle", "Chi tiết người dùng");
-        model.addAttribute("parentPageTitle", "Người dùng");
-        model.addAttribute("parentPageUrl", "/admin/users");
-        model.addAttribute("currentPage", "users");
-        model.addAttribute("userId", id);
-        return "admin/user-details";
-    }
 }

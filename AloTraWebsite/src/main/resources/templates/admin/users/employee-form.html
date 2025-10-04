@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(pageTitle=${nv.id == null ? 'Thêm nhân viên' : 'Sửa nhân viên'}, pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent">
+    <div class="card">
+        <div class="card-body">
+            <form th:action="@{/admin/users/employees/save}" th:object="${nv}" method="post" class="row g-3">
+                <input type="hidden" th:field="*{id}" />
+                <div class="col-md-6">
+                    <label class="form-label">Tài khoản</label>
+                    <input class="form-control" th:field="*{username}" required />
+                    <div class="text-danger small" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" th:field="*{email}" required />
+                    <div class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Họ tên</label>
+                    <input class="form-control" th:field="*{fullName}" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Số điện thoại</label>
+                    <input class="form-control" th:field="*{phone}" />
+                    <div class="text-danger small" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Vai trò</label>
+                    <select class="form-select" th:field="*{role}">
+                        <option th:value="1">Chủ cửa hàng</option>
+                        <option th:value="2">Nhân viên</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Trạng thái</label>
+                    <select class="form-select" th:field="*{status}">
+                        <option th:value="1">Hoạt động</option>
+                        <option th:value="0">Khóa</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" th:text="${nv.id == null ? 'Mật khẩu' : 'Mật khẩu (để trống nếu không đổi)'}"></label>
+                    <input type="password" class="form-control" th:field="*{plainPassword}" th:attr="required=${nv.id == null}" />
+                    <div class="text-danger small" th:if="${#fields.hasErrors('plainPassword')}" th:errors="*{plainPassword}"></div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Xác nhận mật khẩu</label>
+                    <input type="password" class="form-control" th:field="*{confirmPassword}" th:attr="required=${nv.id == null}" />
+                    <div class="text-danger small" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Lưu</button>
+                    <a th:href="@{/admin/users(tab='employees')}" class="btn btn-secondary">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

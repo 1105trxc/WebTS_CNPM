@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(pageTitle=${'Áp sản phẩm - ' + promo.name}, pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent">
+    <div class="card mb-3">
+        <div class="card-body">
+            <form th:action="@{'/admin/promotions/' + ${promo.id} + '/products'}" method="post" class="row gy-2 gx-3 align-items-center">
+                <div class="col-md-6">
+                    <select name="productId" class="form-select" required>
+                        <option value="" disabled selected>-- Chọn sản phẩm --</option>
+                        <option th:each="p : ${unassigned}" th:value="${p.id}" th:text="${p.name}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input name="percent" class="form-control" type="number" min="1" max="100" placeholder="% giảm" required>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary" type="submit">Thêm áp dụng</button>
+                    <a th:href="@{/admin/promotions}" class="btn btn-secondary">Quay lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-hover">
+        <thead>
+        <tr><th>Sản phẩm</th><th class="text-center">Giảm (%)</th><th class="text-end">Hành động</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="l : ${assigned}">
+            <td th:text="${l.product.name}"></td>
+            <td class="text-center" th:text="${l.discountPercent}"></td>
+            <td class="text-end">
+                <a th:href="@{'/admin/promotions/' + ${promo.id} + '/products/' + ${l.product.id} + '/remove'}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bỏ áp dụng sản phẩm này?')">Gỡ</a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(assigned)}">
+            <td colspan="3" class="text-center">Chưa áp sản phẩm nào.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

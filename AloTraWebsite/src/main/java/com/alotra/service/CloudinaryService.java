@@ -18,7 +18,10 @@ public class CloudinaryService {
     public String uploadFile(MultipartFile file) {
         try {
             Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
-            return result.get("url").toString();
+            // Prefer HTTPS URL to avoid mixed-content issues
+            Object secureUrl = result.get("secure_url");
+            Object url = result.get("url");
+            return (secureUrl != null ? secureUrl.toString() : (url != null ? url.toString() : null));
         } catch (IOException e) {
             throw new RuntimeException("Lỗi tải ảnh lên Cloudinary", e);
         }

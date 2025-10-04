@@ -16,12 +16,12 @@ public class ProductService {
     private ProductRepository productRepository;
 
     public List<ProductDTO> findBestSellers() {
-        // Lấy sản phẩm theo schema mới bằng native query (SanPham + BienTheSanPham)
+        // Use native query (SanPham + BienTheSanPham); map imageUrl from DB; fallback to placeholder only if empty
         return productRepository.findBestSellersNative().stream()
                 .map(row -> new ProductDTO(
                         row.getId(),
                         row.getName(),
-                        "/images/placeholder.png", // Schema mới chưa có bảng media -> dùng ảnh mặc định
+                        (row.getImageUrl() != null && !row.getImageUrl().isBlank()) ? row.getImageUrl() : "/images/placeholder.png",
                         row.getPrice()
                 ))
                 .collect(Collectors.toList());

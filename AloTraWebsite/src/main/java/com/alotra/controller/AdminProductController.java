@@ -103,6 +103,10 @@ public class AdminProductController {
         Category cat = new Category();
         cat.setId(categoryId);
         product.setCategory(cat);
+        // default active if not provided
+        if (product.getStatus() == null) {
+            product.setStatus(1);
+        }
         // if image uploaded => upload to cloudinary
         if (imageFile != null && !imageFile.isEmpty()) {
             String url = cloudinaryService.uploadFile(imageFile);
