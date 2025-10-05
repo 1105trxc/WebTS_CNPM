@@ -10,64 +10,113 @@
         <h3 class="mb-3">Giỏ hàng của bạn</h3>
         <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-        <form th:action="@{/checkout}" method="post">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                    <tr>
-                        <th><input type="checkbox" id="checkAll"></th>
-                        <th>Sản phẩm</th>
-                        <th>Size</th>
-                        <th class="text-end">Đơn giá</th>
-                        <th class="text-center">Số lượng</th>
-                        <th class="text-end">Thành tiền</th>
-                        <th class="text-end">Hành động</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="it : ${items}">
-                        <td>
-                            <input type="checkbox" name="itemIds" th:value="${it.id}" class="item-check">
-                        </td>
-                        <td>
-                            <div class="fw-semibold" th:text="${it.variant.product.name}">Tên</div>
-                        </td>
-                        <td th:text="${it.variant.size.name}">Size</td>
-                        <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'"></td>
-                        <td class="text-center">
-                            <form th:action="@{/cart/update}" method="post" class="d-inline">
-                                <input type="hidden" name="itemId" th:value="${it.id}">
-                                <input name="qty" type="number" min="0" class="form-control d-inline-block" style="width: 80px" th:value="${it.quantity}" onchange="this.form.submit()">
-                            </form>
-                        </td>
-                        <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal,0,'COMMA',0,'POINT')} + ' ₫'"></td>
-                        <td class="text-end">
-                            <a th:href="@{'/cart/remove/' + ${it.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa mục này khỏi giỏ?')">Xóa</a>
-                        </td>
-                    </tr>
-                    <tr th:if="${#lists.isEmpty(items)}">
-                        <td colspan="7" class="text-center">Giỏ hàng trống.</td>
-                    </tr>
-                    </tbody>
-                    <tfoot>
-                    <tr>
-                        <th colspan="5" class="text-end">Tổng tạm tính</th>
-                        <th class="text-end" th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT')} + ' ₫'"></th>
-                        <th></th>
-                    </tr>
-                    </tfoot>
-                </table>
-            </div>
-            <div class="d-flex justify-content-between">
-                <a th:href="@{/products}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
-                <div>
-                    <select class="form-select d-inline-block me-2" name="paymentMethod" style="width: 180px">
-                        <option>Tiền mặt</option>
-                        <option>Ví Momo</option>
-                        <option>VNPay</option>
-                    </select>
-                    <button class="btn btn-success" type="submit" onclick="return confirmCheckout()" th:disabled="${#lists.isEmpty(items)}">Đặt hàng</button>
-                </div>
+        <!-- Table of cart items (no outer form to avoid nested forms) -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" id="checkAll"></th>
+                    <th>Sản phẩm</th>
+                    <th>Size</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-end">Thành tiền</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="it : ${items}">
+                    <td>
+                        <input type="checkbox" name="itemIds" th:value="${it.id}" class="item-check" form="checkoutForm">
+                    </td>
+                    <td>
+                        <div class="fw-semibold" th:text="${it.variant.product.name}">Tên</div>
+                        <!-- Show sugar/ice badges only; ignore any legacy 'Trà' entries in note -->
+                        <div class="mt-1" th:if="${it.note}">
+                            <span th:each="p : ${it.note != null ? it.note.split(';') : {}}" th:if="${#strings.contains(p,'Đường') or #strings.contains(p,'Đá')}"
+                                  class="badge bg-light text-dark border me-1" th:text="${#strings.trim(p)}"></span>
+                        </div>
+                        <!-- Current toppings for this item -->
+                        <div class="small mt-1" th:if="${itemToppingsMap[it.id] != null and !#lists.isEmpty(itemToppingsMap[it.id])}">
+                            <span class="text-muted">Topping:</span>
+                            <span th:each="t : ${itemToppingsMap[it.id]}" class="badge bg-success text-white me-1">
+                                <span th:text="${t.topping.name}">Name</span>
+                                <span class="ms-1" th:text="'x' + ${t.quantity}"></span>
+                            </span>
+                        </div>
+                    </td>
+                    <td th:text="${it.variant.size.name}">Size</td>
+                    <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                    <td class="text-center">
+                        <form th:action="@{/cart/update}" method="post" class="d-inline">
+                            <input type="hidden" name="itemId" th:value="${it.id}">
+                            <input name="qty" type="number" min="0" class="form-control d-inline-block" style="width: 80px" th:value="${it.quantity}" onchange="this.form.submit()">
+                        </form>
+                    </td>
+                    <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                    <td class="text-end">
+                        <a th:href="@{'/cart/remove/' + ${it.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa mục này khỏi giỏ?')">Xóa</a>
+                    </td>
+                </tr>
+                <tr th:each="it,iterStat : ${items}">
+                    <td colspan="7" class="bg-light">
+                        <form th:action="@{'/cart/item/' + ${it.id} + '/toppings'}" method="post">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="fw-semibold">
+                                    Topping kèm theo cho: <span th:text="${it.variant.product.name}">Sản phẩm</span>
+                                    (<span th:text="${it.variant.size.name}">Size</span>)
+                                </div>
+                                <div class="text-muted small">Chọn số lượng cho từng loại topping</div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-12" th:if="${#lists.isEmpty(toppingsCatalog)}">
+                                    <div class="text-muted small">Chưa có topping nào khả dụng.</div>
+                                </div>
+                                <div class="col-6 col-md-4 col-lg-3" th:each="t : ${toppingsCatalog}">
+                                    <div class="border rounded p-2 d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="small fw-semibold" th:text="${t.name}">Topping</div>
+                                            <div class="text-muted small" th:text="${#numbers.formatDecimal(t.extraPrice,0,'COMMA',0,'POINT')} + ' ₫'">5.000 ₫</div>
+                                        </div>
+                                        <div class="input-group input-group-sm" style="width: 120px;">
+                                            <button class="btn btn-outline-success" type="button" onclick="this.nextElementSibling.stepDown()">-</button>
+                                            <input class="form-control text-center" type="number" min="0" th:name="${'toppings[' + t.id + ']'}"
+                                                   th:value="${itemTopQtyMap[it.id] != null && itemTopQtyMap[it.id].get(t.id) != null ? itemTopQtyMap[it.id].get(t.id) : 0}">
+                                            <button class="btn btn-outline-success" type="button" onclick="this.previousElementSibling.stepUp()">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-2">
+                                <button class="btn btn-sm btn-success">Cập nhật topping</button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(items)}">
+                    <td colspan="7" class="text-center">Giỏ hàng trống.</td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <th colspan="5" class="text-end">Tổng tạm tính</th>
+                    <th class="text-end" th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT')} + ' ₫'"></th>
+                    <th></th>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+        <!-- Checkout form (standalone) -->
+        <form id="checkoutForm" th:action="@{/checkout}" method="post" class="d-flex justify-content-between mt-2" onsubmit="return confirmCheckout()">
+            <a th:href="@{/products}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
+            <div>
+                <select class="form-select d-inline-block me-2" name="paymentMethod" style="width: 180px">
+                    <option>Tiền mặt</option>
+                    <option>Ví Momo</option>
+                    <option>VNPay</option>
+                </select>
+                <button class="btn btn-success" type="submit" th:disabled="${#lists.isEmpty(items)}">Đặt hàng</button>
             </div>
         </form>
     </div>
@@ -75,8 +124,11 @@
 <th:block th:fragment="additionalJs">
     <script>
         function confirmCheckout() {
-            const checked = document.querySelectorAll('.item-check:checked');
-            if (checked.length === 0) { alert('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng.'); return false; }
+            const anyChecked = document.querySelector('.item-check:checked') !== null;
+            if (!anyChecked) {
+                alert('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng.');
+                return false;
+            }
             return true;
         }
         document.getElementById('checkAll')?.addEventListener('change', function(){

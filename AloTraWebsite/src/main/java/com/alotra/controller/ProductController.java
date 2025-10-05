@@ -13,7 +13,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 @Controller
@@ -58,10 +57,8 @@ public class ProductController {
                             @RequestParam("variantId") Integer variantId,
                             @RequestParam(value = "qty", defaultValue = "1") Integer qty,
                             @RequestParam(value = "sugar", defaultValue = "Bình thường") String sugar,
-                            @RequestParam(value = "tea", defaultValue = "Bình thường") String tea,
                             @RequestParam(value = "ice", defaultValue = "Bình thường") String ice,
                             HttpServletRequest request,
-                            @SessionAttribute(name = "SPRING_SECURITY_CONTEXT", required = false) Object ignored,
                             @org.springframework.security.core.annotation.AuthenticationPrincipal KhachHangUserDetails principal,
                             RedirectAttributes ra) {
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
@@ -75,7 +72,7 @@ public class ProductController {
             return "redirect:/login";
         }
         Map<Integer, Integer> toppingQty = extractToppings(request);
-        String note = String.format("Đường: %s; Trà: %s; Đá: %s", sugar, tea, ice);
+        String note = String.format("Đường: %s; Đá: %s", sugar, ice);
         try {
             cartService.addItemWithOptions(kh, variantId, qty, toppingQty, note);
             ra.addFlashAttribute("message", "Đã thêm vào giỏ hàng");
@@ -88,7 +85,6 @@ public class ProductController {
 
     private Map<Integer, Integer> extractToppings(HttpServletRequest request) {
         Map<Integer, Integer> map = new HashMap<>();
-        // Expect inputs named like: toppings[12] = 2
         request.getParameterMap().forEach((k, v) -> {
             if (k.startsWith("toppings[") && k.endsWith("]")) {
                 try {

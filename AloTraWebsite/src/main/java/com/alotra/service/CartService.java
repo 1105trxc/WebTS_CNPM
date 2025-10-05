@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class CartService {
@@ -217,8 +218,7 @@ public class CartService {
             ol.setLineTotal(ci.getLineTotal());
             ol = orderLineRepo.save(ol);
             // Copy toppings from cart item to order line
-            for (GioHangCTTopping ct : cartToppingRepo.findAll()) {
-                if (!ct.getCartItem().getId().equals(ci.getId())) continue;
+            for (GioHangCTTopping ct : cartToppingRepo.findByCartItem(ci)) {
                 CTDonHangTopping ot = new CTDonHangTopping();
                 ot.setOrderLine(ol);
                 ot.setTopping(ct.getTopping());
@@ -228,8 +228,81 @@ public class CartService {
                 orderToppingRepo.save(ot);
             }
         }
-        // Remove checked-out items from cart
-        for (GioHangCT ci : items) itemRepo.delete(ci);
+        // Remove checked-out items from cart (clean toppings first for safety)
+        GioHang currentCart = items.get(0).getCart();
+        for (GioHangCT ci : items) {
+            for (GioHangCTTopping t : cartToppingRepo.findByCartItem(ci)) {
+                cartToppingRepo.delete(t);
+            }
+            itemRepo.delete(ci);
+        }
+        // If all items in the current ACTIVE cart were checked out, close the cart and open a fresh one
+        boolean noMoreItems = itemRepo.findByCart(currentCart).isEmpty();
+        if (noMoreItems) {
+            currentCart.setStatus("CHECKED_OUT");
+            cartRepo.save(currentCart);
+            // Create a new ACTIVE cart for subsequent shopping
+            getOrCreateActiveCart(kh);
+        }
         return order;
+    }
+
+    // List all active toppings for UI
+    public List<Topping> listActiveToppings() {
+        return toppingRepo.findByDeletedAtIsNull();
+    }
+
+    // For the cart page: map itemId -> toppings on that item
+    public Map<Integer, List<GioHangCTTopping>> getToppingsForItems(List<GioHangCT> items) {
+        Map<Integer, List<GioHangCTTopping>> map = new HashMap<>();
+        for (GioHangCT it : items) {
+            map.put(it.getId(), cartToppingRepo.findByCartItem(it));
+        }
+        return map;
+    }
+
+    @Transactional
+    public void updateToppings(KhachHang kh, Integer itemId, Map<Integer,Integer> toppingQtyById) {
+        GioHangCT item = itemRepo.findById(itemId).orElseThrow();
+        validateOwnership(kh, item);
+        // Existing toppings for this line
+        List<GioHangCTTopping> existing = cartToppingRepo.findByCartItem(item);
+        Map<Integer, GioHangCTTopping> existingByTid = existing.stream()
+                .collect(Collectors.toMap(t -> t.getTopping().getId(), t -> t));
+        // Upsert or delete based on incoming map
+        if (toppingQtyById != null) {
+            for (Map.Entry<Integer,Integer> e : toppingQtyById.entrySet()) {
+                Integer tid = e.getKey();
+                Integer qty = e.getValue() == null ? 0 : Math.max(0, e.getValue());
+                Topping topping = toppingRepo.findById(tid).orElse(null);
+                if (topping == null) continue;
+                if (qty == 0) {
+                    GioHangCTTopping exist = existingByTid.get(tid);
+                    if (exist != null) cartToppingRepo.delete(exist);
+                } else {
+                    GioHangCTTopping exist = existingByTid.get(tid);
+                    if (exist == null) {
+                        exist = new GioHangCTTopping();
+                        exist.setCartItem(item);
+                        exist.setTopping(topping);
+                    }
+                    exist.setQuantity(qty);
+                    exist.setUnitPrice(topping.getExtraPrice());
+                    exist.setLineTotal(topping.getExtraPrice().multiply(BigDecimal.valueOf(qty)));
+                    cartToppingRepo.save(exist);
+                }
+            }
+        }
+        recomputeLineTotal(item);
+    }
+
+    private void recomputeLineTotal(GioHangCT item) {
+        // base*qty + sum(all topping line totals for this item)
+        BigDecimal toppingSum = cartToppingRepo.findByCartItem(item).stream()
+                .map(GioHangCTTopping::getLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal base = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+        item.setLineTotal(base.add(toppingSum));
+        itemRepo.save(item);
     }
 }

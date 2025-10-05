@@ -1,20 +1,107 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/admin-layout :: ~{}}">
-<head>
-    <title>Kênh Người Bán - Bảng điều khiển</title>
-</head>
+      th:replace="~{layouts/admin-layout :: layout(pageTitle='Kênh Người Bán - Bảng điều khiển', pageContent=~{::pageContent})}">
 <body>
-    <div class="page-content">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Bảng điều khiển - Kênh Người Bán</h5>
+<div class="page-content" th:fragment="pageContent">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="card text-bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Chờ xử lý</div>
+                            <div class="display-6" th:text="${counts.pending}">0</div>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-2x"></i>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <p>Chào mừng bạn đến với khu vực quản lý của Vendor.</p>
-                <p>Các thống kê về doanh thu, sản phẩm, đơn hàng sẽ được hiển thị ở đây.</p>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Đang pha chế</div>
+                            <div class="display-6" th:text="${counts.preparing}">0</div>
+                        </div>
+                        <i class="fas fa-mug-hot fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Đang giao</div>
+                            <div class="display-6" th:text="${counts.shipping}">0</div>
+                        </div>
+                        <i class="fas fa-motorcycle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Đơn hôm nay</div>
+                            <div class="display-6" th:text="${counts.today}">0</div>
+                        </div>
+                        <i class="fas fa-calendar-day fa-2x"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+        <h5 class="mb-0">Đơn vừa tạo hôm nay</h5>
+        <a th:href="@{/vendor/orders}" class="btn btn-sm btn-outline-success">Xem tất cả</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Khách hàng</th>
+                        <th>Điện thoại</th>
+                        <th>Thời gian</th>
+                        <th>Trạng thái</th>
+                        <th>Thanh toán</th>
+                        <th class="text-end">Tổng</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="o : ${recent}">
+                        <td th:text="${o.id}"></td>
+                        <td th:text="${o.customerName}"></td>
+                        <td th:text="${o.customerPhone}"></td>
+                        <td th:text="${#temporals.format(o.createdAt, 'HH:mm dd/MM')} "></td>
+                        <td>
+                            <span class="badge" th:classappend="${o.status=='ChoXuLy'?'bg-warning':(o.status=='DangPhaChe'?'bg-primary':(o.status=='DangGiao'?'bg-info':(o.status=='DaGiao'?'bg-success':'bg-secondary')))}"
+                                  th:text="${o.status}"></span>
+                        </td>
+                        <td>
+                            <span class="badge" th:classappend="${o.paymentStatus=='DaThanhToan'?'bg-success':'bg-secondary'}"
+                                  th:text="${o.paymentStatus}"></span>
+                        </td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(o.total,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(recent)}">
+                        <td colspan="7" class="text-center">Chưa có đơn nào hôm nay.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -42,7 +42,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/vendor/**").hasRole("VENDOR")
+                // Allow both VENDOR and ADMIN to access vendor pages
+                .requestMatchers("/vendor/**").hasAnyRole("VENDOR", "ADMIN")
                 .requestMatchers("/shipper/**").hasRole("SHIPPER")
                 .requestMatchers("/account/**", "/checkout/**", "/cart/**").authenticated()
                 .anyRequest().permitAll()
