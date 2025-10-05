@@ -192,11 +192,14 @@ public class CartService {
         if (itemIds == null || itemIds.isEmpty()) {
             throw new IllegalArgumentException("Chưa chọn sản phẩm để đặt hàng");
         }
-        List<GioHangCT> items = new ArrayList<>();
-        for (Integer id : itemIds) {
-            GioHangCT item = itemRepo.findById(id).orElseThrow();
-            validateOwnership(kh, item);
-            items.add(item);
+        // Only allow items from the current ACTIVE cart of this customer
+        GioHang activeCart = getOrCreateActiveCart(kh);
+        // Load all existing items by IDs (ignores missing IDs), then keep only those in this cart
+        List<GioHangCT> items = itemRepo.findAllById(new HashSet<>(itemIds)).stream()
+                .filter(it -> it.getCart() != null && Objects.equals(it.getCart().getId(), activeCart.getId()))
+                .collect(Collectors.toList());
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException("Không có sản phẩm hợp lệ để đặt hàng");
         }
         DonHang order = new DonHang();
         order.setCustomer(kh);
@@ -228,8 +231,7 @@ public class CartService {
                 orderToppingRepo.save(ot);
             }
         }
-        // Remove checked-out items from cart (clean toppings first for safety)
-        GioHang currentCart = items.get(0).getCart();
+        // Remove checked-out items from cart (toppings will be deleted by ON DELETE CASCADE; manual cleanup safe)
         for (GioHangCT ci : items) {
             for (GioHangCTTopping t : cartToppingRepo.findByCartItem(ci)) {
                 cartToppingRepo.delete(t);
@@ -237,10 +239,10 @@ public class CartService {
             itemRepo.delete(ci);
         }
         // If all items in the current ACTIVE cart were checked out, close the cart and open a fresh one
-        boolean noMoreItems = itemRepo.findByCart(currentCart).isEmpty();
+        boolean noMoreItems = itemRepo.findByCart(activeCart).isEmpty();
         if (noMoreItems) {
-            currentCart.setStatus("CHECKED_OUT");
-            cartRepo.save(currentCart);
+            activeCart.setStatus("CHECKED_OUT");
+            cartRepo.save(activeCart);
             // Create a new ACTIVE cart for subsequent shopping
             getOrCreateActiveCart(kh);
         }

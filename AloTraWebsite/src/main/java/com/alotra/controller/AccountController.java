@@ -1,25 +1,157 @@
 package com.alotra.controller;
 
+import com.alotra.entity.KhachHang;
+import com.alotra.security.KhachHangUserDetails;
+import com.alotra.service.CustomerOrderService;
+import com.alotra.service.KhachHangService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Controller
 @RequestMapping("/account") // Tất cả URL sẽ có tiền tố /account
 public class AccountController {
 
+    private final CustomerOrderService orderService;
+    private final KhachHangService khachHangService;
+    private final PasswordEncoder passwordEncoder;
+
+    public AccountController(CustomerOrderService orderService,
+                             KhachHangService khachHangService,
+                             PasswordEncoder passwordEncoder) {
+        this.orderService = orderService;
+        this.khachHangService = khachHangService;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    // Profile - view form
     @GetMapping("/profile")
-    public String showProfilePage(Model model) {
+    public String showProfilePage(@AuthenticationPrincipal KhachHangUserDetails current,
+                                  Model model) {
         model.addAttribute("pageTitle", "Thông Tin Tài Khoản");
-        // Logic để lấy thông tin user đang đăng nhập
+        KhachHang kh = khachHangService.findById(current.getId());
+        ProfileForm form = new ProfileForm();
+        form.fullName = kh.getFullName();
+        form.email = kh.getEmail();
+        form.phone = kh.getPhone();
+        model.addAttribute("form", form);
+        model.addAttribute("kh", kh);
         return "account/profile"; // Trỏ đến file /templates/account/profile.html
     }
 
+    // Profile - submit updates
+    @PostMapping("/profile")
+    public String updateProfile(@AuthenticationPrincipal KhachHangUserDetails current,
+                                @ModelAttribute("form") ProfileForm form,
+                                BindingResult result,
+                                RedirectAttributes ra,
+                                Model model) {
+        KhachHang kh = khachHangService.findById(current.getId());
+        // Validate email unique (exclude self)
+        if (form.email != null && !form.email.equalsIgnoreCase(kh.getEmail())) {
+            KhachHang byEmail = khachHangService.findByEmail(form.email);
+            if (byEmail != null && !byEmail.getId().equals(kh.getId())) {
+                result.rejectValue("email", "dup", "Email đã được sử dụng.");
+            }
+        }
+        // Validate phone unique when present
+        if (form.phone != null && !form.phone.isBlank()) {
+            KhachHang byPhone = khachHangService.findByPhone(form.phone);
+            if (byPhone != null && !byPhone.getId().equals(kh.getId())) {
+                result.rejectValue("phone", "dup", "Số điện thoại đã được sử dụng.");
+            }
+        }
+        // Password change validation (optional)
+        boolean wantChangePwd = form.newPassword != null && !form.newPassword.isBlank();
+        if (wantChangePwd) {
+            if (form.confirmPassword == null || !form.newPassword.equals(form.confirmPassword)) {
+                result.rejectValue("confirmPassword", "mismatch", "Mật khẩu xác nhận không khớp.");
+            }
+        }
+        if (result.hasErrors()) {
+            model.addAttribute("pageTitle", "Thông Tin Tài Khoản");
+            model.addAttribute("kh", kh);
+            return "account/profile";
+        }
+        // Apply updates
+        kh.setFullName(form.fullName);
+        kh.setEmail(form.email);
+        kh.setPhone(form.phone);
+        if (wantChangePwd) {
+            kh.setPasswordHash(passwordEncoder.encode(form.newPassword));
+        }
+        khachHangService.save(kh);
+        ra.addFlashAttribute("message", "Cập nhật thông tin thành công.");
+        return "redirect:/account/profile";
+    }
+
+    // Orders list
     @GetMapping("/orders")
-    public String showOrdersPage(Model model) {
+    public String showOrdersPage(@AuthenticationPrincipal KhachHangUserDetails current,
+                                 @RequestParam(value = "status", required = false) String status,
+                                 Model model) {
         model.addAttribute("pageTitle", "Lịch Sử Đơn Hàng");
-        // Logic để lấy lịch sử đơn hàng của user
+        List<CustomerOrderService.OrderRow> list = orderService.listOrdersByCustomer(current.getId(), status);
+        model.addAttribute("items", list);
+        model.addAttribute("status", status);
         return "account/orders"; // Trỏ đến file /templates/account/orders.html
+    }
+
+    // Order detail (ensure it belongs to logged-in user)
+    @GetMapping("/orders/{id}")
+    public String orderDetail(@PathVariable("id") Integer id,
+                              @AuthenticationPrincipal KhachHangUserDetails current,
+                              RedirectAttributes ra,
+                              Model model) {
+        var order = orderService.getOrderOfCustomer(id, current.getId());
+        if (order == null) {
+            ra.addFlashAttribute("error", "Không tìm thấy đơn hàng.");
+            return "redirect:/account/orders";
+        }
+        var items = orderService.listOrderItems(id);
+        // Build toppings map for each line item
+        Map<Integer, List<CustomerOrderService.ItemToppingRow>> toppings = new HashMap<>();
+        for (var it : items) {
+            toppings.put(it.id, orderService.listOrderItemToppings(it.id));
+        }
+        model.addAttribute("pageTitle", "Chi tiết đơn #" + id);
+        model.addAttribute("order", order);
+        model.addAttribute("items", items);
+        model.addAttribute("toppings", toppings);
+        return "account/order-detail";
+    }
+
+    // Small profile form (DTO)
+    public static class ProfileForm {
+        @NotBlank
+        public String fullName;
+        @NotBlank
+        @Email
+        public String email;
+        public String phone;
+        public String newPassword;
+        public String confirmPassword;
+
+        // getters/setters (Thymeleaf can access public fields directly, but add for safety)
+        public String getFullName() { return fullName; }
+        public void setFullName(String fullName) { this.fullName = fullName; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getPhone() { return phone; }
+        public void setPhone(String phone) { this.phone = phone; }
+        public String getNewPassword() { return newPassword; }
+        public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
+        public String getConfirmPassword() { return confirmPassword; }
+        public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
     }
 }

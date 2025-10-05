@@ -1,12 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/site-layout :: ~{body(content=~{::main})}}">
+      th:replace="~{layouts/site-layout :: body(~{::main}, null, null)}">
 <head>
-    <!-- Title is provided from controller via pageTitle (site-layout prints it) -->
     <title>Lịch Sử Đơn Hàng</title>
 </head>
 <body>
-    <!-- Main content injected into site-layout -->
     <main>
         <h2 class="mb-4">Tài khoản của tôi</h2>
         <div class="row">
@@ -19,10 +17,60 @@
             </div>
             <!-- Content area -->
             <div class="col-md-9">
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Lịch sử đơn hàng</h5>
-                        <p>Một bảng danh sách các đơn hàng đã đặt sẽ được hiển thị ở đây.</p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">Lịch sử đơn hàng</h5>
+                            <form class="d-flex gap-2" method="get" th:action="@{/account/orders}">
+                                <select class="form-select" name="status">
+                                    <option value="" th:selected="${status == null || status == ''}">Tất cả trạng thái</option>
+                                    <option value="ChoXuLy" th:selected="${status == 'ChoXuLy'}">Chờ xử lý</option>
+                                    <option value="DangPhaChe" th:selected="${status == 'DangPhaChe'}">Đang pha chế</option>
+                                    <option value="DangGiao" th:selected="${status == 'DangGiao'}">Đang giao</option>
+                                    <option value="DaGiao" th:selected="${status == 'DaGiao'}">Đã giao</option>
+                                    <option value="DaHuy" th:selected="${status == 'DaHuy'}">Đã hủy</option>
+                                </select>
+                                <button class="btn btn-outline-primary" type="submit">Lọc</button>
+                            </form>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle">
+                                <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thanh toán</th>
+                                    <th class="text-end">Tổng tiền</th>
+                                    <th class="text-end">Hành động</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="o : ${items}">
+                                    <td th:text="${o.id}"></td>
+                                    <td th:text="${o.createdAt != null ? #temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></td>
+                                    <td>
+                                        <span class="badge"
+                                              th:text="${o.status}"></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge"
+                                              th:text="${o.paymentStatus}"
+                                              th:classappend="${o.paymentStatus == 'DaThanhToan' ? 'bg-success' : 'bg-secondary'}"></span>
+                                    </td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(o.total, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                                    <td class="text-end">
+                                        <a th:href="@{'/account/orders/' + ${o.id}}" class="btn btn-sm btn-outline-primary">Xem</a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(items)}">
+                                    <td colspan="6" class="text-center">Chưa có đơn hàng.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

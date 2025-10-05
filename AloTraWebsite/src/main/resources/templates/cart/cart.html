@@ -12,7 +12,7 @@
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
         <!-- Table of cart items (no outer form to avoid nested forms) -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table id="cartTable" class="table table-hover align-middle">
                 <thead>
                 <tr>
                     <th><input type="checkbox" id="checkAll"></th>
@@ -46,14 +46,16 @@
                         </div>
                     </td>
                     <td th:text="${it.variant.size.name}">Size</td>
-                    <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                    <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'" data-unit-price="[[${it.unitPrice}]]"></td>
                     <td class="text-center">
                         <form th:action="@{/cart/update}" method="post" class="d-inline">
                             <input type="hidden" name="itemId" th:value="${it.id}">
                             <input name="qty" type="number" min="0" class="form-control d-inline-block" style="width: 80px" th:value="${it.quantity}" onchange="this.form.submit()">
                         </form>
                     </td>
-                    <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                    <td class="text-end line-total"
+                        th:text="${#numbers.formatDecimal(it.lineTotal,0,'COMMA',0,'POINT')} + ' ₫'"
+                        th:attr="data-line-total=${it.lineTotal}"></td>
                     <td class="text-end">
                         <a th:href="@{'/cart/remove/' + ${it.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa mục này khỏi giỏ?')">Xóa</a>
                     </td>
@@ -93,7 +95,6 @@
                         </form>
                     </td>
                 </tr>
-
                 <tr th:if="${#lists.isEmpty(items)}">
                     <td colspan="7" class="text-center">Giỏ hàng trống.</td>
                 </tr>
@@ -107,14 +108,19 @@
                 </tfoot>
             </table>
         </div>
+        <!-- Tổng tiền các dòng đã chọn -->
+        <div class="d-flex justify-content-end align-items-center mt-2">
+            <span class="me-2 fw-semibold">Tổng tiền đã chọn:</span>
+            <span id="selectedTotal" class="fs-5 text-success">0 ₫</span>
+        </div>
         <!-- Checkout form (standalone) -->
-        <form id="checkoutForm" th:action="@{/checkout}" method="post" class="d-flex justify-content-between mt-2" onsubmit="return confirmCheckout()">
+        <form id="checkoutForm" th:action="@{/cart/checkout}" method="post" class="d-flex justify-content-between mt-2" onsubmit="return confirmCheckout()">
             <a th:href="@{/products}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
             <div>
                 <select class="form-select d-inline-block me-2" name="paymentMethod" style="width: 180px">
-                    <option>Tiền mặt</option>
-                    <option>Ví Momo</option>
-                    <option>VNPay</option>
+                    <option value="TienMat">Tiền mặt</option>
+                    <option value="Momo">Ví Momo</option>
+                    <option value="VNPay">VNPay</option>
                 </select>
                 <button class="btn btn-success" type="submit" th:disabled="${#lists.isEmpty(items)}">Đặt hàng</button>
             </div>
@@ -122,19 +128,7 @@
     </div>
 </th:block>
 <th:block th:fragment="additionalJs">
-    <script>
-        function confirmCheckout() {
-            const anyChecked = document.querySelector('.item-check:checked') !== null;
-            if (!anyChecked) {
-                alert('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng.');
-                return false;
-            }
-            return true;
-        }
-        document.getElementById('checkAll')?.addEventListener('change', function(){
-            document.querySelectorAll('.item-check').forEach(c => c.checked = this.checked);
-        });
-    </script>
+    <script th:src="@{/js/cart.js}"></script>
 </th:block>
 </body>
 </html>
