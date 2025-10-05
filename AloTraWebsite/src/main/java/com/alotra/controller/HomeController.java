@@ -69,12 +69,6 @@ public class HomeController {
         return "auth/login"; // Sẽ tạo trang này sau
     }
 
-    @GetMapping("/cart")
-    public String cartPage(Model model) {
-        model.addAttribute("pageTitle", "Giỏ Hàng");
-        return "cart/cart"; // Sẽ tạo trang này sau
-    }
-
     @GetMapping("/policy")
     public String policyPage(Model model) {
         model.addAttribute("pageTitle", "Chính Sách");

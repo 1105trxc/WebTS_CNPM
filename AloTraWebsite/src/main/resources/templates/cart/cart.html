@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/default_layout :: body(~{::content}, null, ~{::additionalJs})}">
+<head>
+    <title th:replace="~{layouts/default_layout :: title(pageTitle='Giỏ Hàng')}"></title>
+</head>
+<body>
+<th:block th:fragment="content">
+    <div class="container my-4">
+        <h3 class="mb-3">Giỏ hàng của bạn</h3>
+        <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <form th:action="@{/checkout}" method="post">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th><input type="checkbox" id="checkAll"></th>
+                        <th>Sản phẩm</th>
+                        <th>Size</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-end">Thành tiền</th>
+                        <th class="text-end">Hành động</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="it : ${items}">
+                        <td>
+                            <input type="checkbox" name="itemIds" th:value="${it.id}" class="item-check">
+                        </td>
+                        <td>
+                            <div class="fw-semibold" th:text="${it.variant.product.name}">Tên</div>
+                        </td>
+                        <td th:text="${it.variant.size.name}">Size</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                        <td class="text-center">
+                            <form th:action="@{/cart/update}" method="post" class="d-inline">
+                                <input type="hidden" name="itemId" th:value="${it.id}">
+                                <input name="qty" type="number" min="0" class="form-control d-inline-block" style="width: 80px" th:value="${it.quantity}" onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                        <td class="text-end">
+                            <a th:href="@{'/cart/remove/' + ${it.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa mục này khỏi giỏ?')">Xóa</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(items)}">
+                        <td colspan="7" class="text-center">Giỏ hàng trống.</td>
+                    </tr>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th colspan="5" class="text-end">Tổng tạm tính</th>
+                        <th class="text-end" th:text="${#numbers.formatDecimal(total,0,'COMMA',0,'POINT')} + ' ₫'"></th>
+                        <th></th>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a th:href="@{/products}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
+                <div>
+                    <select class="form-select d-inline-block me-2" name="paymentMethod" style="width: 180px">
+                        <option>Tiền mặt</option>
+                        <option>Ví Momo</option>
+                        <option>VNPay</option>
+                    </select>
+                    <button class="btn btn-success" type="submit" onclick="return confirmCheckout()" th:disabled="${#lists.isEmpty(items)}">Đặt hàng</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</th:block>
+<th:block th:fragment="additionalJs">
+    <script>
+        function confirmCheckout() {
+            const checked = document.querySelectorAll('.item-check:checked');
+            if (checked.length === 0) { alert('Vui lòng chọn ít nhất 1 sản phẩm để đặt hàng.'); return false; }
+            return true;
+        }
+        document.getElementById('checkAll')?.addEventListener('change', function(){
+            document.querySelectorAll('.item-check').forEach(c => c.checked = this.checked);
+        });
+    </script>
+</th:block>
+</body>
+</html>
