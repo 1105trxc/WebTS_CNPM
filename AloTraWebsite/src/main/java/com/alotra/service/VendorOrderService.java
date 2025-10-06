@@ -39,7 +39,7 @@ public class VendorOrderService {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT TOP ");
         sb.append(limit != null && limit > 0 ? limit : 50);
-        sb.append(" dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n");
+        sb.append(" dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n");
         sb.append("FROM DonHang dh JOIN KhachHang kh ON kh.MaKH = dh.MaKH WHERE 1=1 ");
         java.util.List<Object> params = new java.util.ArrayList<>();
         if (status != null && !status.isBlank()) {
@@ -69,6 +69,7 @@ public class VendorOrderService {
         public java.time.OffsetDateTime createdAt;
         public String status;
         public String paymentStatus;
+        public String paymentMethod;
         public java.math.BigDecimal total;
         public String customerName;
         public String customerPhone;
@@ -83,6 +84,7 @@ public class VendorOrderService {
             r.createdAt = ts != null ? ts.toInstant().atOffset(java.time.ZoneOffset.UTC) : null;
             r.status = rs.getString("TrangThaiDonHang");
             r.paymentStatus = rs.getString("PaymentStatus");
+            r.paymentMethod = rs.getString("PaymentMethod");
             r.total = rs.getBigDecimal("TongThanhToan");
             r.customerName = rs.getString("TenKH");
             r.customerPhone = rs.getString("SoDienThoai");
@@ -106,7 +108,7 @@ public class VendorOrderService {
     }
 
     public List<OrderRow> listTodayOrders() {
-        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n" +
+        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n" +
                 "FROM DonHang dh JOIN KhachHang kh ON kh.MaKH = dh.MaKH\n" +
                 "WHERE CONVERT(date, dh.NgayLap) = CONVERT(date, SYSUTCDATETIME())\n" +
                 "ORDER BY dh.MaDH DESC";

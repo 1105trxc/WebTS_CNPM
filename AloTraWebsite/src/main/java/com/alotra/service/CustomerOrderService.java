@@ -19,7 +19,7 @@ public class CustomerOrderService {
     // List orders for a specific customer
     public List<OrderRow> listOrdersByCustomer(Integer customerId, String status) {
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.TongThanhToan\n");
+        sb.append("SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan\n");
         sb.append("FROM DonHang dh WHERE dh.MaKH = ? ");
         java.util.List<Object> params = new java.util.ArrayList<>();
         params.add(customerId);
@@ -33,7 +33,7 @@ public class CustomerOrderService {
 
     // Ensure an order belongs to a customer then return it
     public OrderRow getOrderOfCustomer(Integer orderId, Integer customerId) {
-        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.TongThanhToan\n" +
+        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan\n" +
                 "FROM DonHang dh WHERE dh.MaDH = ? AND dh.MaKH = ?";
         List<OrderRow> list = jdbc.query(sql, ORDER_ROW_MAPPER, orderId, customerId);
         return list.isEmpty() ? null : list.get(0);
@@ -61,11 +61,19 @@ public class CustomerOrderService {
         return jdbc.query(sql, ITEM_TOPPING_ROW_MAPPER, orderItemId);
     }
 
+    // Fetch order header by orderId regardless of customer (for vendor view)
+    public OrderRow getOrder(Integer orderId) {
+        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan FROM DonHang dh WHERE dh.MaDH = ?";
+        List<OrderRow> list = jdbc.query(sql, ORDER_ROW_MAPPER, orderId);
+        return list.isEmpty() ? null : list.get(0);
+    }
+
     public static class OrderRow {
         public Integer id;
         public java.time.OffsetDateTime createdAt;
         public String status;
         public String paymentStatus;
+        public String paymentMethod;
         public java.math.BigDecimal total;
     }
 
@@ -95,6 +103,7 @@ public class CustomerOrderService {
             r.createdAt = ts != null ? ts.toInstant().atOffset(java.time.ZoneOffset.UTC) : null;
             r.status = rs.getString("TrangThaiDonHang");
             r.paymentStatus = rs.getString("PaymentStatus");
+            r.paymentMethod = rs.getString("PaymentMethod");
             r.total = rs.getBigDecimal("TongThanhToan");
             return r;
         }

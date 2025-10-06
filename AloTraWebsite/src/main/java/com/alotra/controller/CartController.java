@@ -119,6 +119,11 @@ public class CartController {
                            RedirectAttributes ra) {
         try {
             var order = cartService.checkout(principal.getKhachHang(), itemIds, paymentMethod);
+            if ("ChuyenKhoan".equalsIgnoreCase(paymentMethod)) {
+                // Redirect to payment page with QR for bank transfer
+                return "redirect:/payment/" + order.getId();
+            }
+            // Cash-on-delivery: placed immediately, pay at handover
             ra.addFlashAttribute("msg", "Đặt hàng thành công. Mã đơn: " + order.getId());
             return "redirect:/account/orders";
         } catch (IllegalArgumentException ex) {

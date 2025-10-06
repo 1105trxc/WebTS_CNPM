@@ -9,6 +9,7 @@ import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ProductVariantRepository;
 import com.alotra.repository.SizeSanPhamRepository;
 import com.alotra.service.CloudinaryService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -154,8 +155,15 @@ public class AdminProductController {
     }
 
     @GetMapping("/{id}/variants/{variantId}/delete")
-    public String deleteVariant(@PathVariable Integer id, @PathVariable Integer variantId) {
-        variantRepository.deleteById(variantId);
+    public String deleteVariant(@PathVariable Integer id, @PathVariable Integer variantId, RedirectAttributes ra) {
+        try {
+            variantRepository.deleteById(variantId);
+            ra.addFlashAttribute("message", "Đã xóa biến thể.");
+        } catch (DataIntegrityViolationException ex) {
+            ra.addFlashAttribute("error", "Không thể xóa biến thể vì đang được tham chiếu trong đơn hàng/giỏ hàng.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("error", "Không thể xóa biến thể: " + ex.getMessage());
+        }
         return "redirect:/admin/products/edit/" + id;
     }
 }

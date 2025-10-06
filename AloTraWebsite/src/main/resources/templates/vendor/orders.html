@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/admin-layout :: layout(pageTitle='Đơn hàng cần xử lý', pageContent=~{::pageContent})}">
+      th:replace="~{layouts/vendor-layout :: layout(pageTitle='Đơn hàng cần xử lý', pageContent=~{::pageContent})}">
 <body>
-<div class="page-content" th:fragment="pageContent">
+<div class="page-content" th:fragment="pageContent" th:with="currentPage='vendor-orders'">
     <form class="row g-2 mb-3" method="get" th:action="@{/vendor/orders}">
         <div class="col-md-3">
             <select class="form-select" name="status">
@@ -48,7 +48,12 @@
                     <tbody>
                     <tr th:each="o : ${items}">
                         <td th:text="${o.id}"></td>
-                        <td th:text="${o.customerName}"></td>
+                        <td>
+                            <div th:text="${o.customerName}"></div>
+                            <div class="small">
+                                <span class="badge bg-light text-dark border" th:text="${o.paymentMethod == 'ChuyenKhoan' ? 'Chuyển khoản' : 'Tiền mặt'}"></span>
+                            </div>
+                        </td>
                         <td th:text="${o.customerPhone}"></td>
                         <td th:text="${#temporals.format(o.createdAt, 'HH:mm dd/MM')}"></td>
                         <td>
@@ -62,10 +67,11 @@
                         <td class="text-end" th:text="${#numbers.formatDecimal(o.total,0,'COMMA',0,'POINT')} + ' ₫'"></td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-1">
+                                <a th:href="@{'/vendor/orders/' + ${o.id}}" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
                                 <form th:action="@{'/vendor/orders/' + ${o.id} + '/advance'}" method="post">
                                     <input type="hidden" name="from" th:value="${from}">
                                     <button class="btn btn-sm btn-outline-primary" type="submit"
-                                            th:disabled="${o.status=='DaGiao' || o.status=='DaHuy'}">Chuyển bước</button>
+                                            th:disabled="${(o.paymentMethod=='ChuyenKhoan' && o.paymentStatus!='DaThanhToan') || o.status=='DaGiao' || o.status=='DaHuy'}">Chuyển bước</button>
                                 </form>
                                 <form th:action="@{'/vendor/orders/' + ${o.id} + '/cancel'}" method="post" onsubmit="return confirm('Hủy đơn này?');">
                                     <input type="hidden" name="from" th:value="${from}">
@@ -73,14 +79,18 @@
                                             th:disabled="${!(o.status=='ChoXuLy' || o.status=='DangPhaChe')}">Hủy</button>
                                 </form>
                                 <form th:action="@{'/vendor/orders/' + ${o.id} + '/assign'}" method="post">
-                                    <div class="input-group input-group-sm" style="width: 220px;">
-                                        <select class="form-select" name="employeeId">
+                                    <div class="input-group input-group-sm" style="width: 240px;">
+                                        <select class="form-select" name="employeeId" th:disabled="${(o.paymentMethod=='ChuyenKhoan' && o.paymentStatus!='DaThanhToan')}">
                                             <option th:each="e : ${employees}" th:value="${e.id}"
                                                     th:text="${e.fullName + ' (' + e.username + ')'}"></option>
                                         </select>
-                                        <button class="btn btn-outline-secondary" type="submit">Gán</button>
+                                        <button class="btn btn-outline-secondary" type="submit" th:disabled="${(o.paymentMethod=='ChuyenKhoan' && o.paymentStatus!='DaThanhToan')}">Gán</button>
                                     </div>
                                     <input type="hidden" name="from" th:value="${from}">
+                                </form>
+                                <form th:if="${o.paymentMethod=='TienMat' && o.paymentStatus!='DaThanhToan'}" th:action="@{'/vendor/orders/' + ${o.id} + '/mark-cash-paid'}" method="post" onsubmit="return confirm('Xác nhận đã thu tiền mặt?');">
+                                    <input type="hidden" name="from" th:value="${from}">
+                                    <button class="btn btn-sm btn-success" type="submit">Đã thu tiền</button>
                                 </form>
                             </div>
                         </td>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/default_layout :: body(~{::content}, null, null)}">
+<head>
+    <title th:replace="~{layouts/default_layout :: title(pageTitle='Thanh toán thành công')}"></title>
+</head>
+<body>
+<th:block th:fragment="content">
+    <div class="container my-5 text-center">
+        <div class="display-6 mb-3">Thanh toán thành công</div>
+        <p class="lead">Cảm ơn bạn đã thanh toán. Đơn hàng đã được xác nhận.</p>
+        <p>Mã đơn hàng: <strong th:text="${orderId}">#</strong></p>
+        <a th:href="@{/account/orders}" class="btn btn-outline-primary mt-3">Xem lịch sử đơn hàng</a>
+        <a th:href="@{/}" class="btn btn-link mt-3">Về trang chủ</a>
+    </div>
+</th:block>
+</body>
+</html>

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/admin-layout :: layout(pageTitle='Kênh Người Bán - Bảng điều khiển', pageContent=~{::pageContent})}">
+      th:replace="~{layouts/vendor-layout :: layout(pageTitle='Kênh Người Bán - Bảng điều khiển', pageContent=~{::pageContent})}">
 <body>
-<div class="page-content" th:fragment="pageContent">
+<div class="page-content" th:fragment="pageContent" th:with="currentPage='vendor-dashboard'">
     <div class="row g-3">
         <div class="col-md-3">
             <div class="card text-bg-warning">
@@ -76,6 +76,7 @@
                         <th>Trạng thái</th>
                         <th>Thanh toán</th>
                         <th class="text-end">Tổng</th>
+                        <th class="text-end">Xem</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -83,7 +84,7 @@
                         <td th:text="${o.id}"></td>
                         <td th:text="${o.customerName}"></td>
                         <td th:text="${o.customerPhone}"></td>
-                        <td th:text="${#temporals.format(o.createdAt, 'HH:mm dd/MM')} "></td>
+                        <td th:text="${#temporals.format(o.createdAt, 'HH:mm dd/MM')}"></td>
                         <td>
                             <span class="badge" th:classappend="${o.status=='ChoXuLy'?'bg-warning':(o.status=='DangPhaChe'?'bg-primary':(o.status=='DangGiao'?'bg-info':(o.status=='DaGiao'?'bg-success':'bg-secondary')))}"
                                   th:text="${o.status}"></span>
@@ -93,9 +94,12 @@
                                   th:text="${o.paymentStatus}"></span>
                         </td>
                         <td class="text-end" th:text="${#numbers.formatDecimal(o.total,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                        <td class="text-end">
+                            <a th:href="@{'/vendor/orders/' + ${o.id}}" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
+                        </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(recent)}">
-                        <td colspan="7" class="text-center">Chưa có đơn nào hôm nay.</td>
+                        <td colspan="8" class="text-center">Chưa có đơn nào hôm nay.</td>
                     </tr>
                     </tbody>
                 </table>

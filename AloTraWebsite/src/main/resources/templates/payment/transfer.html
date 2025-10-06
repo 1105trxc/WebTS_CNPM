@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/default_layout :: body(~{::content}, null, ~{::scripts})}">
+<head>
+    <title th:replace="~{layouts/default_layout :: title(pageTitle=${pageTitle})}"></title>
+</head>
+<body>
+<th:block th:fragment="content">
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0" th:text="${pageTitle}">Thanh toán đơn #</h3>
+            <a th:href="@{/account/orders}" class="btn btn-outline-secondary">Lịch sử đơn</a>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Chi tiết đơn hàng</h5>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th class="text-center">Size</th>
+                                    <th class="text-center">SL</th>
+                                    <th class="text-end">Đơn giá</th>
+                                    <th class="text-end">Giảm dòng</th>
+                                    <th class="text-end">Thành tiền</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="it : ${items}">
+                                    <td>
+                                        <div class="fw-semibold" th:text="${it.productName}"></div>
+                                        <div class="small text-muted"
+                                             th:if="${#maps.containsKey(toppings, it.id) and !#lists.isEmpty(toppings[it.id])}">
+                                            <div class="mt-1">Topping:</div>
+                                            <ul class="small mb-0">
+                                                <li th:each="tp : ${toppings[it.id]}"
+                                                    th:text="${tp.toppingName + ' x' + tp.quantity + ' (' + #numbers.formatDecimal(tp.unitPrice,0,'COMMA',0,'POINT') + ' ₫) = ' + #numbers.formatDecimal(tp.total,0,'COMMA',0,'POINT') + ' ₫'}"></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                    <td class="text-center" th:text="${it.sizeName}"></td>
+                                    <td class="text-center" th:text="${it.quantity}"></td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(it.lineDiscount, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(items)}">
+                                    <td colspan="6" class="text-center">Đơn hàng chưa có dòng sản phẩm.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-semibold">Tổng tiền</span>
+                            <strong th:text="${#numbers.formatDecimal(order.total, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h6 class="mb-2">Quét mã để chuyển khoản</h6>
+                        <img th:src="${qrUrl}" alt="QR Chuyển khoản" class="img-fluid border rounded" />
+                        <div class="small text-muted mt-2">Ngân hàng: <strong th:text="${bankCode}">MSB</strong> - Số TK: <strong id="accNum" th:text="${accountNumber}">000</strong>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" type="button" onclick="copyText(document.getElementById('accNum').innerText)">Sao chép</button>
+                        </div>
+                        <div class="small text-muted">Nội dung chuyển khoản: <strong id="addInfo" th:text="${addInfo}"></strong>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" type="button" onclick="copyText(document.getElementById('addInfo').innerText)">Sao chép</button>
+                        </div>
+                        <hr/>
+                        <div id="statusBox" class="alert alert-warning py-2">Đang chờ thanh toán...</div>
+                        <div class="d-grid gap-2">
+                            <div class="small text-muted">Hết hạn trong: <span id="countdown">--:--</span></div>
+                            <form th:action="@{'/payment/' + ${order.id} + '/cancel'}" method="post" onsubmit="return confirm('Hủy đơn hàng này?');">
+                                <button type="submit" class="btn btn-outline-danger w-100">Hủy đơn</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <script>
+        function copyText(t){ if(!t) return; navigator.clipboard?.writeText(t).then(()=>{ /* ok */}).catch(()=>{}); }
+        (function(){
+            const orderId = /*[[${order.id}]]*/ 0;
+            const ctx = /*[[@{/}]]*/ '';
+            const base = (ctx ? ctx.replace(/\/$/, '') : '');
+            const statusUrl = base + '/payment/' + orderId + '/status';
+            const successUrl = base + '/payment/' + orderId + '/success';
+            const box = document.getElementById('statusBox');
+            const cd = document.getElementById('countdown');
+            const expiry = Number(/*[[${expiryEpochMillis}]]*/ 0);
+            let stopped = false;
+            function renderCountdown(){
+                if (!expiry) return;
+                const ms = expiry - Date.now();
+                if (ms <= 0) { cd.textContent = '00:00'; return; }
+                const s = Math.floor(ms/1000); const mm = String(Math.floor(s/60)).padStart(2,'0'); const ss = String(s%60).padStart(2,'0');
+                cd.textContent = mm + ':' + ss;
+            }
+            function poll(){
+                if (stopped) return;
+                fetch(statusUrl, { cache: 'no-store' })
+                    .then(r => r.json())
+                    .then(j => {
+                        if (j.paymentStatus === 'DaThanhToan') {
+                            stopped = true;
+                            box.className = 'alert alert-success py-2';
+                            box.textContent = 'Đã thanh toán. Đang chuyển...';
+                            setTimeout(() => location.href = successUrl, 600);
+                        } else if (j.orderStatus === 'DaHuy') {
+                            stopped = true;
+                            box.className = 'alert alert-danger py-2';
+                            box.textContent = 'Đơn hàng đã bị hủy.';
+                        } else {
+                            box.className = 'alert alert-warning py-2';
+                            box.textContent = 'Đang chờ thanh toán...';
+                        }
+                    })
+                    .catch(() => {});
+            }
+            setInterval(() => { renderCountdown(); poll(); }, 3000);
+            renderCountdown(); poll();
+        })();
+    </script>
+</th:block>
+</body>
+</html>

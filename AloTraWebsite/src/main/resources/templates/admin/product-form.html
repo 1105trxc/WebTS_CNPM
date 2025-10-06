@@ -3,6 +3,8 @@
       th:replace="~{layouts/admin-layout :: layout(pageTitle=${product.id == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}, pageContent=~{::pageContent})}">
 <body>
 <div class="page-content" th:fragment="pageContent">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0" th:text="${product.id == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}"></h5>
