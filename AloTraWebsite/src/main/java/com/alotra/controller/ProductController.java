@@ -4,6 +4,7 @@ import com.alotra.entity.*;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ProductVariantRepository;
 import com.alotra.repository.ToppingRepository;
+import com.alotra.repository.KhuyenMaiSanPhamRepository;
 import com.alotra.security.KhachHangUserDetails;
 import com.alotra.service.CartService;
 import com.alotra.service.KhachHangService;
@@ -13,6 +14,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Controller
@@ -23,17 +26,20 @@ public class ProductController {
     private final ToppingRepository toppingRepo;
     private final CartService cartService;
     private final KhachHangService khService;
+    private final KhuyenMaiSanPhamRepository promoRepo;
 
     public ProductController(ProductRepository productRepo,
                              ProductVariantRepository variantRepo,
                              ToppingRepository toppingRepo,
                              CartService cartService,
-                             KhachHangService khService) {
+                             KhachHangService khService,
+                             KhuyenMaiSanPhamRepository promoRepo) {
         this.productRepo = productRepo;
         this.variantRepo = variantRepo;
         this.toppingRepo = toppingRepo;
         this.cartService = cartService;
         this.khService = khService;
+        this.promoRepo = promoRepo;
     }
 
     @GetMapping("/{id}")
@@ -45,11 +51,26 @@ public class ProductController {
         List<Topping> toppings = toppingRepo.findByDeletedAtIsNull();
         toppings.removeIf(t -> t.getStatus() != null && t.getStatus() == 0);
 
+        Integer discountPercent = promoRepo.findActiveMaxDiscountPercentForProduct(p.getId());
+        BigDecimal basePrice = (!variants.isEmpty() ? variants.get(0).getPrice() : BigDecimal.ZERO);
+        BigDecimal discountedPrice = applyPercent(basePrice, discountPercent);
+
         model.addAttribute("pageTitle", p.getName());
         model.addAttribute("product", p);
         model.addAttribute("variants", variants);
         model.addAttribute("toppings", toppings);
+        model.addAttribute("discountPercent", discountPercent);
+        model.addAttribute("basePrice", basePrice);
+        model.addAttribute("discountedPrice", discountedPrice);
         return "products/product_detail";
+    }
+
+    private BigDecimal applyPercent(BigDecimal base, Integer percent) {
+        if (base == null) return null;
+        if (percent == null || percent <= 0) return base;
+        BigDecimal factor = BigDecimal.valueOf(100 - Math.min(100, percent))
+                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+        return base.multiply(factor).setScale(0, RoundingMode.HALF_UP);
     }
 
     @PostMapping("/{id}/add-to-cart")

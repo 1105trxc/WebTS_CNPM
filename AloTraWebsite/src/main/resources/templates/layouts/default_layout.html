@@ -40,8 +40,16 @@
     <!-- App global JS -->
     <script th:src="@{/js/main.js}"></script>
     <script th:src="@{/js/cart.js}"></script>
+    <th:block th:if="${order != null}">
+    <script th:inline="javascript">
+        window.orderId = /*[[${order.id}]]*/ 0;
+        window.ctx = /*[[@{/}]]*/ '';
+        window.expiryEpochMillis = /*[[${expiryEpochMillis}]]*/ 0;
+    </script>
+    <script th:src="@{/js/transfer.js}"></script>
+</th:block>
     <!-- Page-level extra JS (optional, injected by child pages) -->
-    <th:block th:replace="${additionalJs} ?: ~{}"></th:block>
+    <th:block th:replace="${scripts} ?: ~{}"></th:block>
 
 </body>
 </html>

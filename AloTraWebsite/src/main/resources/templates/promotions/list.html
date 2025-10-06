@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/default_layout :: body(~{::content}, null, null)}">
+<head>
+    <title th:replace="~{layouts/default_layout :: title(pageTitle='Tin tức & Khuyến mãi')}"></title>
+</head>
+<body>
+<th:block th:fragment="content">
+    <section class="container my-4">
+        <h2 class="mb-3">Tin tức & Khuyến mãi</h2>
+        <div class="promo-grid" style="display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+            <article class="promo-card card shadow-sm" th:each="it : ${items}" style="overflow:hidden;border-radius:12px">
+                <a th:href="@{'/promotions/' + ${it.id}}" class="d-block">
+                    <img th:src="${it.imageUrl != null ? it.imageUrl : '/images/placeholder.png'}" th:alt="${it.name}" style="width:100%;aspect-ratio:16/9;object-fit:cover"/>
+                </a>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between text-muted small mb-1">
+                        <span><i class="far fa-calendar me-1"></i><span th:text="${#temporals.format(it.startDate,'dd/MM/yyyy')} + ' - ' + ${#temporals.format(it.endDate,'dd/MM/yyyy')}">--</span></span>
+                        <span><i class="far fa-eye me-1"></i><span th:text="${it.views ?: 0}">0</span></span>
+                    </div>
+                    <h3 class="h6 mb-1"><a class="text-decoration-none text-dark" th:href="@{'/promotions/' + ${it.id}}" th:text="${it.name}">Tiêu đề</a></h3>
+                    <p class="text-muted small mb-0" th:text="${it.description}">Mô tả ngắn...</p>
+                </div>
+            </article>
+            <div th:if="${#lists.isEmpty(items)}" class="text-muted">Chưa có sự kiện nào.</div>
+        </div>
+    </section>
+</th:block>
+</body>
+</html>

@@ -23,6 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestParam;
+import com.alotra.repository.SuKienKhuyenMaiRepository;
+import com.alotra.repository.KhuyenMaiSanPhamRepository;
+import com.alotra.entity.SuKienKhuyenMai;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 
 @Controller
 public class HomeController {
@@ -32,6 +37,10 @@ public class HomeController {
     private KhachHangService khachHangService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    // Promotions
+    @Autowired private SuKienKhuyenMaiRepository promoRepo;
+    @Autowired private KhuyenMaiSanPhamRepository promoLinkRepo;
+
     @GetMapping("/")
     public String homePage(Model model) {
         model.addAttribute("pageTitle", "AloTra - Trang Chủ");
@@ -41,6 +50,27 @@ public class HomeController {
 
         // Đưa danh sách vào model với tên là "bestSellers" để HTML có thể dùng
         model.addAttribute("bestSellers", bestSellers);
+
+        // Tin tức & Khuyến mãi: lấy tối đa 8 sự kiện đang hoạt động
+        List<SuKienKhuyenMai> promos = promoRepo.findTop8ByStatusOrderByStartDateDesc(1);
+        List<PromotionCard> cards = new ArrayList<>();
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        for (SuKienKhuyenMai p : promos) {
+            // Ưu tiên ảnh riêng của sự kiện; nếu trống thì lấy 1 ảnh SP áp dụng; fallback placeholder
+            String eventImg = (p.getImageUrl() != null && !p.getImageUrl().isBlank()) ? p.getImageUrl() : null;
+            String fallbackImg = promoLinkRepo.findByPromotion(p).stream()
+                    .map(l -> l.getProduct())
+                    .filter(pr -> pr != null && pr.getImageUrl() != null && !pr.getImageUrl().isBlank())
+                    .map(pr -> pr.getImageUrl())
+                    .findFirst()
+                    .orElse(null);
+            String imageUrl = eventImg != null ? eventImg : (fallbackImg != null ? fallbackImg : "/images/placeholder.png");
+            String period = (p.getStartDate() != null ? df.format(p.getStartDate()) : "?") +
+                    " - " + (p.getEndDate() != null ? df.format(p.getEndDate()) : "?");
+            int views = p.getViews() == null ? 0 : p.getViews();
+            cards.add(new PromotionCard(p.getId(), p.getName(), p.getDescription(), imageUrl, period, views));
+        }
+        model.addAttribute("promotions", cards);
         return "home/index"; // Trả về tên file template (home/index.html)
     }
 
@@ -117,5 +147,18 @@ public class HomeController {
     public String profilePage(Model model) {
         model.addAttribute("pageTitle", "Thông Tin Tài Khoản");
         return "profile/profile"; // Sẽ tạo trang này sau
+    }
+
+    // Simple view-model for promotions on homepage
+    public static class PromotionCard {
+        public Integer id;
+        public String title;
+        public String description;
+        public String imageUrl;
+        public String periodText;
+        public int views;
+        public PromotionCard(Integer id, String title, String description, String imageUrl, String periodText, int views) {
+            this.id = id; this.title = title; this.description = description; this.imageUrl = imageUrl; this.periodText = periodText; this.views = views;
+        }
     }
 }

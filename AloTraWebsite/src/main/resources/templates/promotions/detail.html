@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/default_layout :: body(~{::content}, null, null)}">
+<head>
+    <title th:replace="~{layouts/default_layout :: title(pageTitle=${pageTitle})}"></title>
+</head>
+<body>
+<th:block th:fragment="content">
+    <section class="container my-4">
+        <div class="row g-4">
+            <div class="col-12">
+                <div class="card shadow-sm overflow-hidden" style="border-radius:12px;">
+                    <img th:src="${item.imageUrl != null ? item.imageUrl : '/images/placeholder.png'}" th:alt="${item.name}"
+                         style="width:100%;aspect-ratio:21/9;object-fit:cover;"/>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center text-muted small">
+                            <div><i class="far fa-calendar me-1"></i><span th:text="${period}">--</span></div>
+                            <div><i class="far fa-eye me-1"></i><span th:text="${item.views ?: 0}">0</span></div>
+                        </div>
+                        <h1 class="h4 mt-2" th:text="${item.name}">Tiêu đề sự kiện</h1>
+                        <p class="text-muted" th:if="${item.description}" th:text="${item.description}">Mô tả</p>
+                        <div class="d-flex gap-2 mt-2">
+                            <a th:href="@{/products}" class="btn btn-success">Đặt ngay</a>
+                            <a th:href="@{/promotions}" class="btn btn-outline-secondary">Xem tất cả khuyến mãi</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <h2 class="h5 mb-3">Sản phẩm áp dụng</h2>
+                <div class="row g-3">
+                    <div class="col-6 col-md-4 col-lg-3" th:each="l : ${assigned}">
+                        <div class="card h-100 shadow-sm">
+                            <a th:href="@{'/products/' + ${l.product.id}}" class="d-block">
+                                <img th:src="${l.product.imageUrl != null ? l.product.imageUrl : '/images/placeholder.png'}" th:alt="${l.product.name}"
+                                     class="card-img-top" style="aspect-ratio:1/1;object-fit:cover;"/>
+                            </a>
+                            <div class="card-body">
+                                <div class="small text-muted mb-1">Giảm tối đa</div>
+                                <div class="badge bg-danger mb-2" th:text="${'-' + l.discountPercent + '%'}">-10%</div>
+                                <h3 class="h6"><a class="text-decoration-none text-dark"
+                                                   th:href="@{'/products/' + ${l.product.id}}"
+                                                   th:text="${l.product.name}">Tên SP</a></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(assigned)}" class="text-muted">Chưa có sản phẩm áp dụng.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+</th:block>
+</body>
+</html>

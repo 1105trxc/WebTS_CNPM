@@ -4,11 +4,13 @@ import com.alotra.entity.KhuyenMaiSanPham;
 import com.alotra.entity.SuKienKhuyenMai;
 import com.alotra.entity.Product;
 import com.alotra.service.PromotionService;
+import com.alotra.service.CloudinaryService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,9 +19,11 @@ import java.util.List;
 @RequestMapping("/admin/promotions")
 public class PromotionAdminController {
     private final PromotionService promotionService;
+    private final CloudinaryService cloudinaryService;
 
-    public PromotionAdminController(PromotionService promotionService) {
+    public PromotionAdminController(PromotionService promotionService, CloudinaryService cloudinaryService) {
         this.promotionService = promotionService;
+        this.cloudinaryService = cloudinaryService;
     }
 
     @GetMapping
@@ -48,7 +52,10 @@ public class PromotionAdminController {
     }
 
     @PostMapping("/save")
-    public String save(@ModelAttribute("item") @Valid SuKienKhuyenMai item, BindingResult result, Model model) {
+    public String save(@ModelAttribute("item") @Valid SuKienKhuyenMai item,
+                       BindingResult result,
+                       @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                       Model model) {
         // basic date validation
         LocalDate s = item.getStartDate();
         LocalDate e = item.getEndDate();
@@ -56,6 +63,20 @@ public class PromotionAdminController {
             result.rejectValue("endDate", "date.invalid", "Ngày kết thúc phải >= ngày bắt đầu");
         }
         if (result.hasErrors()) {
+            model.addAttribute("pageTitle", item.getId() == null ? "Thêm sự kiện" : "Sửa sự kiện");
+            model.addAttribute("currentPage", "promotions");
+            return "admin/promotion-form";
+        }
+        try {
+            if (imageFile != null && !imageFile.isEmpty()) {
+                String url = cloudinaryService.uploadFile(imageFile);
+                item.setImageUrl(url);
+            } else if (item.getId() != null) {
+                // preserve existing image if not uploading new
+                promotionService.findById(item.getId()).ifPresent(old -> item.setImageUrl(old.getImageUrl()));
+            }
+        } catch (Exception ex) {
+            result.rejectValue("imageUrl", "upload.error", "Lỗi tải ảnh: " + ex.getMessage());
             model.addAttribute("pageTitle", item.getId() == null ? "Thêm sự kiện" : "Sửa sự kiện");
             model.addAttribute("currentPage", "promotions");
             return "admin/promotion-form";

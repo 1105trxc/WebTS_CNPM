@@ -5,31 +5,42 @@
 <div class="page-content" th:fragment="pageContent">
     <div class="card">
         <div class="card-body">
-            <form th:action="@{/admin/promotions/save}" th:object="${item}" method="post" class="row g-3">
+            <form th:action="@{/admin/promotions/save}" th:object="${item}" method="post" class="row g-3" enctype="multipart/form-data">
                 <input type="hidden" th:field="*{id}">
+                <!-- Preserve current image when not uploading: avoid th:field to bypass property introspection -->
+                <input type="hidden" name="imageUrl" th:value="${item.imageUrl}">
+                
                 <div class="col-md-6">
                     <label class="form-label">Tên sự kiện</label>
                     <input class="form-control" th:field="*{name}" required>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
+                    <label class="form-label">Ngày bắt đầu</label>
+                    <input type="date" class="form-control" th:field="*{startDate}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Ngày kết thúc</label>
+                    <input type="date" class="form-control" th:field="*{endDate}" required>
+                    <div class="text-danger small" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
+                </div>
+                <div class="col-md-4">
                     <label class="form-label">Trạng thái</label>
                     <select class="form-select" th:field="*{status}">
                         <option th:value="1">Hoạt động</option>
                         <option th:value="0">Ngừng</option>
                     </select>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Ngày bắt đầu</label>
-                    <input type="date" class="form-control" th:field="*{startDate}" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Ngày kết thúc</label>
-                    <input type="date" class="form-control" th:field="*{endDate}" required>
-                    <div class="text-danger small" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
-                </div>
-                <div class="col-12">
+                <div class="col-md-8">
                     <label class="form-label">Mô tả</label>
                     <textarea class="form-control" th:field="*{description}" rows="3"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Ảnh sự kiện</label>
+                    <div class="mb-2">
+                        <img id="previewImg" th:src="${item.imageUrl != null ? item.imageUrl : '/images/placeholder.png'}" alt="Xem trước" class="img-thumbnail" style="max-height: 180px; object-fit: cover;">
+                    </div>
+                    <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="(function(e){const f=e.target.files[0];if(f){document.getElementById('previewImg').src=URL.createObjectURL(f);}})(event)">
+                    <div class="text-danger small" th:if="${#fields.hasErrors('imageUrl')}" th:errors="*{imageUrl}"></div>
                 </div>
                 <div class="col-12 d-flex gap-2">
                     <button class="btn btn-primary" type="submit">Lưu</button>

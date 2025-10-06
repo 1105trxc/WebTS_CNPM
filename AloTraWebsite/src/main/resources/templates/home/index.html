@@ -19,7 +19,11 @@
             <div id="product-list-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-5 g-4">
                 <!-- Product card -->
                 <div class="col" th:each="product : ${bestSellers}">
-                    <div class="card product-card h-100">
+                    <div class="card product-card h-100 position-relative">
+                        <!-- Discount badge -->
+                        <span th:if="${product.discountPercent != null and product.discountPercent > 0}"
+                              class="badge bg-danger position-absolute" style="top:8px; left:8px; z-index: 2;"
+                              th:text="${'-' + product.discountPercent + '%'}">-10%</span>
                         <a th:href="@{'/products/' + ${product.id}}">
                             <img th:src="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl) ? product.imageUrl : '/images/placeholder.png'}"
                                  class="card-img-top" th:alt="${product.name}" />
@@ -29,11 +33,21 @@
                                 <a class="text-decoration-none text-dark" th:href="@{'/products/' + ${product.id}}" th:text="${product.name}">Tên sản phẩm</a>
                             </h5>
 
-                            <!-- Price: show formatted price if available, otherwise a friendly message -->
-                            <p class="price mt-auto" th:if="${product.price != null}"
-                               th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
-                               Giá sản phẩm</p>
-                            <p class="text-muted mt-auto" th:if="${product.price == null}">Đang cập nhật giá</p>
+                            <!-- Price block with discount -->
+                            <div class="mt-auto">
+                                <div th:if="${product.discountPercent != null and product.discountPercent > 0}">
+                                    <div class="text-muted text-decoration-line-through small"
+                                         th:text="${#numbers.formatDecimal(product.originalPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'">30.000 ₫</div>
+                                    <div class="price text-danger fw-semibold"
+                                         th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">25.000 ₫</div>
+                                </div>
+                                <div th:if="${product.discountPercent == null or product.discountPercent <= 0}">
+                                    <p class="price mt-1"
+                                       th:if="${product.price != null}"
+                                       th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT') + ' ₫'}">Giá sản phẩm</p>
+                                    <p class="text-muted mt-1" th:if="${product.price == null}">Đang cập nhật giá</p>
+                                </div>
+                            </div>
 
                             <!-- Add to cart: GET link to /cart/add with productId; disabled when price missing -->
                             <a th:if="${product.price != null}"
@@ -64,6 +78,50 @@
             </div>
         </section>
 
+        <!-- News & Promotions: card grid -->
+        <section class="container my-5" id="news-promotions">
+            <h2 class="section-title">TIN TỨC & KHUYẾN MÃI</h2>
+
+            <style>
+                /* Scoped styles for promotions grid */
+                #news-promotions .promo-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+                #news-promotions .promo-card { background: #fff; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,.06); overflow: hidden; display: flex; flex-direction: column; transition: transform .2s ease, box-shadow .2s ease; }
+                #news-promotions .promo-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.08); }
+                #news-promotions .promo-thumb img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+                #news-promotions .promo-body { padding: 12px 14px 16px; }
+                #news-promotions .promo-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: #6c757d; font-size: .9rem; }
+                #news-promotions .promo-title { font-size: 1.05rem; font-weight: 700; margin: .35rem 0; line-height: 1.35; }
+                #news-promotions .promo-desc { color: #6c757d; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+                @media (min-width: 768px) { #news-promotions .promo-title { font-size: 1.1rem; } }
+            </style>
+
+            <div class="promo-grid">
+                <article class="promo-card" th:each="p : ${promotions}">
+                    <a class="promo-thumb" th:href="@{'/promotions/' + ${p.id}}">
+                        <img th:src="${p.imageUrl != null ? p.imageUrl : '/images/placeholder.png'}" th:alt="${p.title}" />
+                    </a>
+                    <div class="promo-body">
+                        <div class="promo-meta">
+                            <span class="promo-time"><i class="far fa-calendar me-1"></i><span th:text="${p.periodText}">--/-- - --/--</span></span>
+                            <span class="promo-views"><i class="far fa-eye me-1"></i><span th:text="${p.views}">0</span></span>
+                        </div>
+                        <h3 class="promo-title"><a class="text-decoration-none text-dark" th:href="@{'/promotions/' + ${p.id}}" th:text="${p.title}">Tiêu đề khuyến mãi</a></h3>
+                        <p class="promo-desc" th:if="${p.description}" th:text="${p.description}">Mô tả ngắn...</p>
+                    </div>
+                </article>
+                <div th:if="${#lists.isEmpty(promotions)}" class="text-center text-muted">Chưa có khuyến mãi nào.</div>
+            </div>
+
+            <!-- View more button for promotions (same mechanism as best-sellers) -->
+            <div class="text-center mt-4" th:if="${#lists.size(promotions) > 5}">
+                <th:block th:with="hiddenPromoCount=${#lists.size(promotions) - 5}">
+                    <button id="promo-view-more-btn" class="btn btn-outline-success btn-lg"
+                            th:text="'Xem thêm ' + ${hiddenPromoCount} + ' khuyến mãi'">
+                    </button>
+                </th:block>
+            </div>
+        </section>
+
         <!-- About section (static marketing copy) -->
         <section class="container my-5 py-5 bg-light rounded shadow-sm text-center">
             <h2 class="section-title">Về AloTra</h2>
@@ -80,6 +138,7 @@
         <script>
             // Simple progressive reveal: show 5 items first, expand on click
             $(document).ready(function() {
+                // Best-sellers
                 const productContainer = $("#product-list-container");
                 const viewMoreBtn = $("#view-more-btn");
 
@@ -95,8 +154,21 @@
                         $(this).hide();
                     });
                 } else {
-                    // Optional: debug output in case elements are missing
                     console.log("Không tìm thấy product-list-container hoặc view-more-btn.");
+                }
+
+                // Promotions (same mechanism)
+                const promoGrid = $("#news-promotions .promo-grid");
+                const promoViewMoreBtn = $("#promo-view-more-btn");
+                if (promoGrid.length && promoViewMoreBtn.length) {
+                    const hiddenPromos = promoGrid.find(".promo-card:gt(4)").hide();
+                    if (hiddenPromos.length === 0) {
+                        promoViewMoreBtn.hide();
+                    }
+                    promoViewMoreBtn.on('click', function() {
+                        hiddenPromos.show();
+                        $(this).hide();
+                    });
                 }
             });
         </script>

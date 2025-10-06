@@ -88,6 +88,8 @@ CREATE TABLE dbo.SuKienKhuyenMai (
     NgayBD DATE NOT NULL,
     NgayKT DATE NOT NULL,
     TrangThai TINYINT NOT NULL DEFAULT 1 CHECK (TrangThai IN (0,1)),
+    UrlAnh NVARCHAR(500) NULL,
+    LuotXem INT NULL DEFAULT 0,
     CONSTRAINT CK_KM_Ngay CHECK (NgayKT >= NgayBD)
 );
 

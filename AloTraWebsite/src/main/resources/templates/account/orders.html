@@ -1,22 +1,15 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/site-layout :: body(~{::main}, null, null)}">
+      th:replace="~{layouts/account-layout :: layout(pageTitle='Lịch Sử Đơn Hàng', pageContent=~{::pageContent})}">
 <head>
     <title>Lịch Sử Đơn Hàng</title>
 </head>
 <body>
-    <main>
+    <div class="page-content" th:fragment="pageContent" th:with="currentPage='account-orders'">
         <h2 class="mb-4">Tài khoản của tôi</h2>
         <div class="row">
-            <!-- Sidebar navigation -->
-            <div class="col-md-3">
-                <div class="list-group">
-                    <a th:href="@{/account/profile}" class="list-group-item list-group-item-action">Thông tin cá nhân</a>
-                    <a th:href="@{/account/orders}" class="list-group-item list-group-item-action active">Lịch sử đơn hàng</a>
-                </div>
-            </div>
-            <!-- Content area -->
-            <div class="col-md-9">
+            <!-- Sidebar in layout -->
+            <div class="col-md-12 col-lg-10 col-xl-9">
                 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
                 <div class="card">
                     <div class="card-body">
@@ -75,6 +68,6 @@
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 </body>
 </html>

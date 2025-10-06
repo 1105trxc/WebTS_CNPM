@@ -20,12 +20,14 @@ public class CartService {
     private final GioHangCTToppingRepository cartToppingRepo;
     private final ToppingRepository toppingRepo;
     private final CTDonHangToppingRepository orderToppingRepo;
+    private final KhuyenMaiSanPhamRepository promoRepo; // new
 
     public CartService(GioHangRepository cartRepo, GioHangCTRepository itemRepo,
                        ProductVariantRepository variantRepo, ProductRepository productRepo,
                        DonHangRepository orderRepo, CTDonHangRepository orderLineRepo,
                        GioHangCTToppingRepository cartToppingRepo, ToppingRepository toppingRepo,
-                       CTDonHangToppingRepository orderToppingRepo) {
+                       CTDonHangToppingRepository orderToppingRepo,
+                       KhuyenMaiSanPhamRepository promoRepo) {
         this.cartRepo = cartRepo;
         this.itemRepo = itemRepo;
         this.variantRepo = variantRepo;
@@ -35,6 +37,7 @@ public class CartService {
         this.cartToppingRepo = cartToppingRepo;
         this.toppingRepo = toppingRepo;
         this.orderToppingRepo = orderToppingRepo;
+        this.promoRepo = promoRepo;
     }
 
     @Transactional
@@ -56,7 +59,10 @@ public class CartService {
         if (variant == null) {
             throw new IllegalArgumentException("Không tìm thấy biến thể hợp lệ để thêm vào giỏ.");
         }
-        BigDecimal unitPrice = variant.getPrice();
+        // Apply active product promotion percent to base price
+        BigDecimal basePrice = variant.getPrice();
+        Integer percent = (variant.getProduct() != null) ? promoRepo.findActiveMaxDiscountPercentForProduct(variant.getProduct().getId()) : null;
+        BigDecimal unitPrice = applyPercent(basePrice, percent);
         // merge same variant line
         GioHangCT line = itemRepo.findByCartAndVariant(cart, variant).orElseGet(() -> {
             GioHangCT l = new GioHangCT();
@@ -68,7 +74,7 @@ public class CartService {
             return l;
         });
         line.setQuantity(line.getQuantity() + qty);
-        line.setUnitPrice(unitPrice); // snapshot current variant price
+        line.setUnitPrice(unitPrice); // snapshot discounted price
         line.setLineTotal(unitPrice.multiply(BigDecimal.valueOf(line.getQuantity())));
         line.setNote(note);
         return itemRepo.save(line);
@@ -80,13 +86,16 @@ public class CartService {
         GioHang cart = getOrCreateActiveCart(kh);
         ProductVariant variant = resolveVariant(null, variantId);
         if (variant == null) throw new IllegalArgumentException("Biến thể không hợp lệ.");
+        // Apply active product promotion to base
         BigDecimal base = variant.getPrice();
+        Integer percent = (variant.getProduct() != null) ? promoRepo.findActiveMaxDiscountPercentForProduct(variant.getProduct().getId()) : null;
+        BigDecimal unitPrice = applyPercent(base, percent);
         // Create a fresh line (do not merge when options differ)
         GioHangCT line = new GioHangCT();
         line.setCart(cart);
         line.setVariant(variant);
         line.setQuantity(qty);
-        line.setUnitPrice(base);
+        line.setUnitPrice(unitPrice);
         line.setNote(note);
         // Compute toppings per drink and total
         BigDecimal toppingPerDrink = BigDecimal.ZERO;
@@ -101,7 +110,7 @@ public class CartService {
                 toppingPerDrink = toppingPerDrink.add(up.multiply(BigDecimal.valueOf(perDrink)));
             }
         }
-        BigDecimal lineTotal = base.add(toppingPerDrink).multiply(BigDecimal.valueOf(qty));
+        BigDecimal lineTotal = unitPrice.add(toppingPerDrink).multiply(BigDecimal.valueOf(qty));
         line.setLineTotal(lineTotal);
         line = itemRepo.save(line);
         // Persist topping items as total quantity across line (perDrink * qty)
@@ -137,6 +146,15 @@ public class CartService {
                     .orElse(null);
         }
         return null;
+    }
+
+    private BigDecimal applyPercent(BigDecimal base, Integer percent) {
+        if (base == null) return null;
+        if (percent == null || percent <= 0) return base;
+        java.math.RoundingMode RM = java.math.RoundingMode.HALF_UP;
+        java.math.BigDecimal p = java.math.BigDecimal.valueOf(100 - Math.min(100, percent))
+                .divide(java.math.BigDecimal.valueOf(100), 4, RM);
+        return base.multiply(p).setScale(0, RM);
     }
 
     public List<GioHangCT> listItems(KhachHang kh) {

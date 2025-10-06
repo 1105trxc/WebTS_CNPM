@@ -88,50 +88,13 @@
 </th:block>
 
 <th:block th:fragment="scripts">
-    <script>
-        function copyText(t){ if(!t) return; navigator.clipboard?.writeText(t).then(()=>{ /* ok */}).catch(()=>{}); }
-        (function(){
-            const orderId = /*[[${order.id}]]*/ 0;
-            const ctx = /*[[@{/}]]*/ '';
-            const base = (ctx ? ctx.replace(/\/$/, '') : '');
-            const statusUrl = base + '/payment/' + orderId + '/status';
-            const successUrl = base + '/payment/' + orderId + '/success';
-            const box = document.getElementById('statusBox');
-            const cd = document.getElementById('countdown');
-            const expiry = Number(/*[[${expiryEpochMillis}]]*/ 0);
-            let stopped = false;
-            function renderCountdown(){
-                if (!expiry) return;
-                const ms = expiry - Date.now();
-                if (ms <= 0) { cd.textContent = '00:00'; return; }
-                const s = Math.floor(ms/1000); const mm = String(Math.floor(s/60)).padStart(2,'0'); const ss = String(s%60).padStart(2,'0');
-                cd.textContent = mm + ':' + ss;
-            }
-            function poll(){
-                if (stopped) return;
-                fetch(statusUrl, { cache: 'no-store' })
-                    .then(r => r.json())
-                    .then(j => {
-                        if (j.paymentStatus === 'DaThanhToan') {
-                            stopped = true;
-                            box.className = 'alert alert-success py-2';
-                            box.textContent = 'Đã thanh toán. Đang chuyển...';
-                            setTimeout(() => location.href = successUrl, 600);
-                        } else if (j.orderStatus === 'DaHuy') {
-                            stopped = true;
-                            box.className = 'alert alert-danger py-2';
-                            box.textContent = 'Đơn hàng đã bị hủy.';
-                        } else {
-                            box.className = 'alert alert-warning py-2';
-                            box.textContent = 'Đang chờ thanh toán...';
-                        }
-                    })
-                    .catch(() => {});
-            }
-            setInterval(() => { renderCountdown(); poll(); }, 3000);
-            renderCountdown(); poll();
-        })();
+    <script th:inline="javascript">
+        // Export minimal globals for transfer.js
+        window.orderId = /*[[${order.id}]]*/ 0;
+        window.ctx = /*[[@{/}]]*/ '';
+        window.expiryEpochMillis = /*[[${expiryEpochMillis}]]*/ 0;
     </script>
+    <script th:src="@{/js/transfer.js}"></script>
 </th:block>
 </body>
 </html>

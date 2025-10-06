@@ -29,6 +29,13 @@ public class SuKienKhuyenMai {
     @Column(name = "TrangThai", nullable = false)
     private Integer status = 1; // 0: inactive, 1: active
 
+    // New: banner image and view counter
+    @Column(name = "UrlAnh")
+    private String imageUrl;
+
+    @Column(name = "LuotXem")
+    private Integer views;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -46,4 +53,10 @@ public class SuKienKhuyenMai {
 
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public Integer getViews() { return views; }
+    public void setViews(Integer views) { this.views = views; }
 }
