@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -175,6 +176,46 @@ public class PaymentController {
         order.setPaidAt(LocalDateTime.now());
         orderRepo.save(order);
         return ResponseEntity.ok(Map.of("status", "OK"));
+    }
+
+    // New: success page after paid
+    @GetMapping("/{id}/success")
+    public String success(@PathVariable Integer id,
+                          @AuthenticationPrincipal KhachHangUserDetails principal,
+                          Model model) {
+        DonHang order = orderRepo.findById(id).orElse(null);
+        if (order == null) return "redirect:/account/orders";
+        if (principal == null || order.getCustomer() == null || !order.getCustomer().getId().equals(principal.getId())) {
+            return "redirect:/account/orders";
+        }
+        model.addAttribute("orderId", id);
+        return "payment/success";
+    }
+
+    @PostMapping("/{id}/cancel")
+    public String cancel(@PathVariable Integer id,
+                         @AuthenticationPrincipal KhachHangUserDetails principal,
+                         RedirectAttributes ra) {
+        DonHang order = orderRepo.findById(id).orElse(null);
+        if (order == null) {
+            ra.addFlashAttribute("error", "Đơn hàng không tồn tại");
+            return "redirect:/account/orders";
+        }
+        if (principal == null || order.getCustomer() == null || !order.getCustomer().getId().equals(principal.getId())) {
+            return "redirect:/account/orders";
+        }
+        if ("DaThanhToan".equals(order.getPaymentStatus())) {
+            return "redirect:/payment/" + id + "/success";
+        }
+        // Only allow cancel when status is exactly ChoXuLy
+        if ("ChoXuLy".equals(order.getStatus())) {
+            order.setStatus("DaHuy");
+            orderRepo.save(order);
+            ra.addFlashAttribute("msg", "Đã hủy đơn #" + id);
+        } else {
+            ra.addFlashAttribute("error", "Chỉ hủy được đơn đang chờ xử lý.");
+        }
+        return "redirect:/account/orders";
     }
 
     private String buildVietQrUrl(String bankCode, String accountNumber, int amount, String addInfo) {

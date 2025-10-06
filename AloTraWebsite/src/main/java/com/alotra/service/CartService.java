@@ -267,6 +267,79 @@ public class CartService {
         return order;
     }
 
+    @Transactional
+    public DonHang checkoutWithOptions(KhachHang kh, List<Integer> itemIds, String paymentMethod,
+                                       String note, String receivingMethod,
+                                       String shipName, String shipPhone, String shipAddress) {
+        if (itemIds == null || itemIds.isEmpty()) {
+            throw new IllegalArgumentException("Chưa chọn sản phẩm để đặt hàng");
+        }
+        GioHang activeCart = getOrCreateActiveCart(kh);
+        List<GioHangCT> items = itemRepo.findAllById(new HashSet<>(itemIds)).stream()
+                .filter(it -> it.getCart() != null && Objects.equals(it.getCart().getId(), activeCart.getId()))
+                .collect(Collectors.toList());
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException("Không có sản phẩm hợp lệ để đặt hàng");
+        }
+        DonHang order = new DonHang();
+        order.setCustomer(kh);
+        order.setPaymentMethod(paymentMethod);
+        order.setReceivingMethod(receivingMethod);
+        // Merge shipping info into note for now (no dedicated columns)
+        StringBuilder sb = new StringBuilder();
+        if (note != null && !note.isBlank()) sb.append(note.trim());
+        if ("Ship".equalsIgnoreCase(receivingMethod)) {
+            if (sb.length() > 0) sb.append(" | ");
+            sb.append("Ship to: ");
+            if (shipName != null && !shipName.isBlank()) sb.append(shipName.trim()).append(", ");
+            if (shipPhone != null && !shipPhone.isBlank()) sb.append(shipPhone.trim()).append(", ");
+            if (shipAddress != null && !shipAddress.isBlank()) sb.append(shipAddress.trim());
+        }
+        if (sb.length() > 0) order.setNote(sb.toString());
+        // Compute totals
+        BigDecimal tongHang = calcTotal(items);
+        order.setTongHang(tongHang);
+        order.setGiamGiaDon(BigDecimal.ZERO);
+        // Simple shipping fee rule: 0 for pickup, 0 for ship (placeholder; extend later)
+        order.setPhiVanChuyen(BigDecimal.ZERO);
+        order.setTongThanhToan(tongHang.add(order.getPhiVanChuyen()).subtract(order.getGiamGiaDon()));
+        order = orderRepo.save(order);
+        // Persist lines and toppings
+        for (GioHangCT ci : items) {
+            CTDonHang ol = new CTDonHang();
+            ol.setOrder(order);
+            ol.setVariant(ci.getVariant());
+            ol.setQuantity(ci.getQuantity());
+            ol.setUnitPrice(ci.getUnitPrice());
+            ol.setLineDiscount(BigDecimal.ZERO);
+            ol.setLineTotal(ci.getLineTotal());
+            ol = orderLineRepo.save(ol);
+            for (GioHangCTTopping ct : cartToppingRepo.findByCartItem(ci)) {
+                CTDonHangTopping ot = new CTDonHangTopping();
+                ot.setOrderLine(ol);
+                ot.setTopping(ct.getTopping());
+                ot.setQuantity(ct.getQuantity());
+                ot.setUnitPrice(ct.getUnitPrice());
+                ot.setLineTotal(ct.getLineTotal());
+                orderToppingRepo.save(ot);
+            }
+        }
+        // Cleanup cart items
+        for (GioHangCT ci : items) {
+            for (GioHangCTTopping t : cartToppingRepo.findByCartItem(ci)) {
+                cartToppingRepo.delete(t);
+            }
+            itemRepo.delete(ci);
+        }
+        boolean noMoreItems = itemRepo.findByCart(activeCart).isEmpty();
+        if (noMoreItems) {
+            activeCart.setStatus("CHECKED_OUT");
+            cartRepo.save(activeCart);
+            getOrCreateActiveCart(kh);
+        }
+        return order;
+    }
+
     // List all active toppings for UI
     public List<Topping> listActiveToppings() {
         return toppingRepo.findByDeletedAtIsNull();

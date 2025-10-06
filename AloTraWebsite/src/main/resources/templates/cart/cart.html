@@ -114,7 +114,7 @@
             <span id="selectedTotal" class="fs-5 text-success">0 ₫</span>
         </div>
         <!-- Checkout form (standalone) -->
-        <form id="checkoutForm" th:action="@{/cart/checkout}" method="post" class="d-flex justify-content-between mt-2" onsubmit="return confirmCheckout()">
+        <form id="checkoutForm" th:action="@{/checkout/confirm}" method="post" class="d-flex justify-content-between mt-2" onsubmit="return confirmCheckout()">
             <a th:href="@{/products}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
             <div>
                 <select class="form-select d-inline-block me-2" name="paymentMethod" style="width: 180px">

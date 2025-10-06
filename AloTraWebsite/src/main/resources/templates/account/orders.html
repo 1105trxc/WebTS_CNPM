@@ -10,6 +10,7 @@
         <div class="row">
             <!-- Sidebar in layout -->
             <div class="col-md-12 col-lg-10 col-xl-9">
+                <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
                 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
                 <div class="card">
                     <div class="card-body">
@@ -46,7 +47,8 @@
                                     <td th:text="${o.createdAt != null ? #temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></td>
                                     <td>
                                         <span class="badge"
-                                              th:text="${o.status}"></span>
+                                              th:text="${o.status}"
+                                              th:classappend="${o.status=='ChoXuLy'?'bg-warning':(o.status=='DangPhaChe'?'bg-primary':(o.status=='DangGiao'?'bg-info':(o.status=='DaGiao'?'bg-success':'bg-secondary')))}"></span>
                                     </td>
                                     <td>
                                         <span class="badge"
@@ -55,7 +57,13 @@
                                     </td>
                                     <td class="text-end" th:text="${#numbers.formatDecimal(o.total, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
                                     <td class="text-end">
-                                        <a th:href="@{'/account/orders/' + ${o.id}}" class="btn btn-sm btn-outline-primary">Xem</a>
+                                        <div class="d-inline-flex gap-1">
+                                            <a th:href="@{'/account/orders/' + ${o.id}}" class="btn btn-sm btn-outline-primary">Xem</a>
+                                            <!-- Allow cancel only when status is ChoXuLy -->
+                                            <form th:if="${o.status == 'ChoXuLy'}" th:action="@{'/payment/' + ${o.id} + '/cancel'}" method="post" onsubmit="return confirm('Hủy đơn này?');">
+                                                <button class="btn btn-sm btn-outline-danger" type="submit">Hủy</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(items)}">

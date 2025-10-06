@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/default_layout :: body(~{::content}, null, ~{::scripts})}">
+<head>
+    <title th:replace="~{layouts/default_layout :: title(pageTitle='Xác nhận đặt hàng')}"></title>
+</head>
+<body>
+<th:block th:fragment="content">
+    <div class="container my-4">
+        <h3 class="mb-3">Xác nhận đặt hàng</h3>
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Sản phẩm trong đơn</h5>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th class="text-center">Size</th>
+                                    <th class="text-center">SL</th>
+                                    <th class="text-end">Đơn giá</th>
+                                    <th class="text-end">Thành tiền</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="it : ${items}">
+                                    <td>
+                                        <div class="fw-semibold" th:text="${it.variant.product.name}">Tên SP</div>
+                                        <div class="small text-muted" th:if="${itemToppingsMap[it.id] != null and !#lists.isEmpty(itemToppingsMap[it.id])}">
+                                            <div class="mt-1">Topping:</div>
+                                            <ul class="small mb-0">
+                                                <li th:each="tp : ${itemToppingsMap[it.id]}"
+                                                    th:text="${tp.topping.name + ' x' + tp.quantity + ' (' + #numbers.formatDecimal(tp.unitPrice,0,'COMMA',0,'POINT') + ' ₫) = ' + #numbers.formatDecimal(tp.lineTotal,0,'COMMA',0,'POINT') + ' ₫'}"></li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                    <td class="text-center" th:text="${it.variant.size.name}">Size</td>
+                                    <td class="text-center" th:text="${it.quantity}">1</td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(items)}">
+                                    <td colspan="5" class="text-center">Không có sản phẩm.</td>
+                                </tr>
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <th colspan="4" class="text-end">Tổng tạm tính</th>
+                                    <th class="text-end" th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></th>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <form th:action="@{/checkout/place}" method="post" class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Tùy chọn đơn hàng</h6>
+                        <!-- Hidden selected items -->
+                        <div th:each="id : ${itemIds}"><input type="hidden" name="itemIds" th:value="${id}"></div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Phương thức thanh toán</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="paymentMethod" id="payCash" value="TienMat"
+                                       th:checked="${paymentMethod == null || paymentMethod == 'TienMat'}">
+                                <label class="btn btn-outline-success" for="payCash"><i class="fa fa-money-bill me-1"></i> Tiền mặt</label>
+                                <input type="radio" class="btn-check" name="paymentMethod" id="payBank" value="ChuyenKhoan"
+                                       th:checked="${paymentMethod == 'ChuyenKhoan'}">
+                                <label class="btn btn-outline-success" for="payBank"><i class="fa fa-building-columns me-1"></i> Chuyển khoản</label>
+                            </div>
+                            <div class="form-text" id="bankHint" style="display:none">QR sẽ hiển thị sau khi xác nhận đặt hàng.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ghi chú cho đơn hàng</label>
+                            <textarea class="form-control" name="note" rows="2" placeholder="Ví dụ: Giao trước 11h, Không bỏ đá..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Phương thức nhận hàng</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="receivingMethod" id="recvShip" value="Ship" checked>
+                                <label class="form-check-label" for="recvShip">Ship tận nơi</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="receivingMethod" id="recvPickup" value="Pickup">
+                                <label class="form-check-label" for="recvPickup">Đến cửa hàng lấy</label>
+                            </div>
+                        </div>
+
+                        <div id="shipForm">
+                            <div class="mb-2">
+                                <label class="form-label">Họ tên người nhận</label>
+                                <input class="form-control" name="shipName" placeholder="Người nhận">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Số điện thoại</label>
+                                <input class="form-control" name="shipPhone" placeholder="SĐT liên hệ">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Địa chỉ</label>
+                                <input class="form-control" name="shipAddress" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành">
+                            </div>
+                        </div>
+                        <div id="pickupHint" class="small text-muted" style="display:none">
+                            Đến lấy tại: 268 Lý Thường Kiệt, Phường 14, Quận 10, TP.HCM (ví dụ)
+                        </div>
+
+                        <button class="btn btn-success w-100 mt-3" type="submit">Xác nhận đặt hàng</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            const payBank = document.getElementById('payBank');
+            const bankHint = document.getElementById('bankHint');
+            const recvShip = document.getElementById('recvShip');
+            const shipForm = document.getElementById('shipForm');
+            const pickupHint = document.getElementById('pickupHint');
+
+            function updateUI(){
+                bankHint.style.display = payBank.checked ? 'block' : 'none';
+                const ship = recvShip.checked;
+                shipForm.style.display = ship ? 'block' : 'none';
+                pickupHint.style.display = ship ? 'none' : 'block';
+            }
+            document.querySelectorAll('input[name="paymentMethod"], input[name="receivingMethod"]').forEach(el => {
+                el.addEventListener('change', updateUI);
+            });
+            updateUI();
+        });
+    </script>
+</th:block>
+</body>
+</html>

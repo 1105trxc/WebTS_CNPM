@@ -51,6 +51,10 @@ public class DonHang {
     @Column(name = "GhiChu")
     private String note;
 
+    // New: receiving method (Ship/Pickup)
+    @Column(name = "PhuongThucNhanHang")
+    private String receivingMethod;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public KhachHang getCustomer() { return customer; }
@@ -79,4 +83,6 @@ public class DonHang {
     public void setTongThanhToan(BigDecimal tongThanhToan) { this.tongThanhToan = tongThanhToan; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
+    public String getReceivingMethod() { return receivingMethod; }
+    public void setReceivingMethod(String receivingMethod) { this.receivingMethod = receivingMethod; }
 }
