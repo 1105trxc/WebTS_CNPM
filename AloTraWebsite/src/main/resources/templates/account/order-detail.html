@@ -11,6 +11,9 @@
         <a th:href="@{/account/orders}" class="btn btn-outline-secondary">Quay lại</a>
     </div>
 
+    <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
     <div class="row">
         <div class="col-lg-8">
             <div class="card mb-3">
@@ -61,6 +64,72 @@
                                 <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
                                 <td class="text-end" th:text="${#numbers.formatDecimal(it.lineDiscount, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
                                 <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                            </tr>
+                            <!-- Review row for each item -->
+                            <tr th:each="it : ${items}">
+                                <td colspan="6" class="bg-light">
+                                    <div class="d-flex align-items-start justify-content-between flex-wrap">
+                                        <div class="mb-2"><span class="badge bg-secondary">Đánh giá cho:</span>
+                                            <strong class="ms-2" th:text="${it.productName + ' (' + it.sizeName + ')'}"></strong>
+                                        </div>
+                                        <div class="text-muted small mb-2" th:if="${#maps.containsKey(reviewsByLine, it.id)}">
+                                            <span class="me-2">Đã gửi</span>
+                                            <span th:if="${#maps.containsKey(reviewEditableByLine, it.id) and reviewEditableByLine[it.id]}"
+                                                  th:text="${'(có thể sửa/xóa trong ' + editWindowMinutes + ' phút)'}"></span>
+                                        </div>
+                                    </div>
+
+                                    <div th:if="${#maps.containsKey(reviewsByLine, it.id)}">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <strong class="me-2">Đánh giá của bạn:</strong>
+                                            <span class="badge bg-success" th:text="${reviewsByLine[it.id].stars} + ' / 5'"></span>
+                                        </div>
+                                        <div th:if="${reviewsByLine[it.id].comment}" class="text-muted">"<span th:text="${reviewsByLine[it.id].comment}"></span>"</div>
+                                        <!-- Edit/Delete when allowed -->
+                                        <div class="mt-2" th:if="${#maps.containsKey(reviewEditableByLine, it.id) and reviewEditableByLine[it.id]}">
+                                            <form class="row g-2 align-items-center" th:action="@{'/account/reviews/' + ${reviewsByLine[it.id].id} + '/edit'}" method="post">
+                                                <input type="hidden" name="orderId" th:value="${order.id}"/>
+                                                <div class="col-md-2">
+                                                    <select name="stars" class="form-select form-select-sm">
+                                                        <option th:each="s : ${#numbers.sequence(1,5)}" th:value="${s}" th:text="${s}"
+                                                                th:selected="${s==reviewsByLine[it.id].stars}"></option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <input class="form-control form-control-sm" name="comment" th:value="${reviewsByLine[it.id].comment}" placeholder="Cập nhật nhận xét (tùy chọn)">
+                                                </div>
+                                                <div class="col-md-2 text-end">
+                                                    <button class="btn btn-sm btn-outline-primary" type="submit">Cập nhật</button>
+                                                </div>
+                                            </form>
+                                            <form class="mt-2" th:action="@{'/account/reviews/' + ${reviewsByLine[it.id].id} + '/delete'}" method="post" onsubmit="return confirm('Xóa đánh giá này?');">
+                                                <input type="hidden" name="orderId" th:value="${order.id}"/>
+                                                <button class="btn btn-sm btn-outline-danger" type="submit">Xóa đánh giá</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <div th:if="${!#maps.containsKey(reviewsByLine, it.id)}">
+                                        <div th:if="${eligibleForReview}">
+                                            <form th:action="@{'/account/orders/' + ${order.id} + '/review'}" method="post" class="row g-2 align-items-center">
+                                                <input type="hidden" name="lineId" th:value="${it.id}">
+                                                <div class="col-md-3">
+                                                    <label class="form-label mb-0 small">Số sao</label>
+                                                    <select name="stars" class="form-select form-select-sm">
+                                                        <option th:each="s : ${#numbers.sequence(5,1)}" th:value="${s}" th:text="${s}" th:selected="${s==5}">5</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    <label class="form-label mb-0 small">Nhận xét (tùy chọn)</label>
+                                                    <input class="form-control form-control-sm" name="comment" placeholder="Viết cảm nhận của bạn...">
+                                                </div>
+                                                <div class="col-md-2 text-end">
+                                                    <button class="btn btn-sm btn-success mt-3 mt-md-4" type="submit">Gửi đánh giá</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div th:if="${!eligibleForReview}" class="small text-muted">Chỉ có thể đánh giá khi đơn đã giao và đã thanh toán.</div>
+                                    </div>
+                                </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(items)}">
                                 <td colspan="6" class="text-center">Đơn hàng chưa có dòng sản phẩm.</td>

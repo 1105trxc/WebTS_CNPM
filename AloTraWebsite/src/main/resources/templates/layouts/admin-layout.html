@@ -73,6 +73,10 @@
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'marketing'} ? 'active-custom' : ''">
 					<i class="fas fa-bullhorn me-2"></i> Marketing
+				</a> <a th:href="@{/admin/reviews}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'reviews'} ? 'active-custom' : ''">
+					<i class="fas fa-star me-2"></i> Đánh giá
 				</a> <a th:href="@{/admin/settings}"
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'settings'} ? 'active-custom' : ''">

@@ -45,7 +45,16 @@
                             </span>
                         </div>
                     </td>
-                    <td th:text="${it.variant.size.name}">Size</td>
+                    <td>
+                        <!-- Size selector: change variant (size) of this cart item -->
+                        <form th:action="@{'/cart/item/' + ${it.id} + '/variant'}" method="post" class="d-inline">
+                            <select class="form-select form-select-sm" name="variantId" onchange="this.form.submit()">
+                                <option th:each="v : ${itemVariantsMap[it.id]}" th:value="${v.id}"
+                                        th:selected="${v.id == it.variant.id}"
+                                        th:text="${v.size.name}"></option>
+                            </select>
+                        </form>
+                    </td>
                     <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'" data-unit-price="[[${it.unitPrice}]]"></td>
                     <td class="text-center">
                         <form th:action="@{/cart/update}" method="post" class="d-inline">
@@ -115,12 +124,9 @@
         </div>
         <!-- Checkout form (standalone) -->
         <form id="checkoutForm" th:action="@{/checkout/confirm}" method="post" class="d-flex justify-content-between mt-2" onsubmit="return confirmCheckout()">
-            <a th:href="@{/products}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
+            <a th:href="@{/}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
             <div>
-                <select class="form-select d-inline-block me-2" name="paymentMethod" style="width: 180px">
-                    <option value="TienMat">Tiền mặt</option>
-                    <option value="ChuyenKhoan">Chuyển khoản</option>
-                </select>
+
                 <button class="btn btn-success" type="submit" th:disabled="${#lists.isEmpty(items)}">Đặt hàng</button>
             </div>
         </form>

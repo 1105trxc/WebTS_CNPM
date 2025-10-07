@@ -27,4 +27,9 @@ public class CategoryService {
     public void deleteById(Integer id) {
         categoryRepository.deleteById(id);
     }
+
+    // New: list only active categories (not in trash)
+    public List<Category> findActive() {
+        return categoryRepository.findByDeletedAtIsNull();
+    }
 }

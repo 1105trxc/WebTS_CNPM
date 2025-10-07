@@ -43,6 +43,13 @@ public class CartController {
             qtyMap.put(itemId, inner);
         });
         model.addAttribute("itemTopQtyMap", qtyMap);
+        // New: variants per item to allow changing size
+        Map<Integer, List<com.alotra.entity.ProductVariant>> itemVariantsMap = new HashMap<>();
+        for (GioHangCT it : items) {
+            var product = it.getVariant() != null ? it.getVariant().getProduct() : null;
+            itemVariantsMap.put(it.getId(), cartService.listVariantsForProduct(product));
+        }
+        model.addAttribute("itemVariantsMap", itemVariantsMap);
         model.addAttribute("total", cartService.calcTotal(items));
         if (msg != null) model.addAttribute("message", msg);
         if (error != null) model.addAttribute("error", error);
@@ -55,10 +62,17 @@ public class CartController {
                                  @RequestParam(value = "productId", required = false) Integer productId,
                                  @RequestParam(value = "variantId", required = false) Integer variantId,
                                  @RequestParam(value = "qty", required = false, defaultValue = "1") Integer qty,
+                                 @RequestParam(value = "redirect", required = false, defaultValue = "cart") String redirect,
                                  RedirectAttributes ra) {
+        if (principal == null) {
+            return "redirect:/login";
+        }
         KhachHang kh = principal.getKhachHang();
         cartService.addItem(kh, productId, variantId, qty, null);
         ra.addFlashAttribute("msg", "Đã thêm vào giỏ hàng");
+        if ("home".equalsIgnoreCase(redirect)) {
+            return "redirect:/";
+        }
         return "redirect:/cart";
     }
 
@@ -106,6 +120,21 @@ public class CartController {
             }
             cartService.updateToppings(principal.getKhachHang(), itemId, map);
             ra.addFlashAttribute("msg", "Đã cập nhật topping.");
+        } catch (RuntimeException ex) {
+            ra.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/cart";
+    }
+
+    // New: change size (variant) of a cart item
+    @PostMapping("/item/{id}/variant")
+    public String changeVariant(@AuthenticationPrincipal KhachHangUserDetails principal,
+                                @PathVariable("id") Integer itemId,
+                                @RequestParam("variantId") Integer newVariantId,
+                                RedirectAttributes ra) {
+        try {
+            cartService.changeVariant(principal.getKhachHang(), itemId, newVariantId);
+            ra.addFlashAttribute("msg", "Đã cập nhật kích cỡ sản phẩm.");
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());
         }

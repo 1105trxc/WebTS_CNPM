@@ -5,6 +5,7 @@ import com.alotra.entity.Product;
 import com.alotra.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
@@ -26,9 +27,21 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             "ORDER BY sp.MaSP DESC", nativeQuery = true)
     List<BestSellerProjection> findBestSellersNative();
 
+    // New: list products by category (null = all)
+    @Query(value = "SELECT sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, MIN(b.GiaBan) AS price " +
+            "FROM SanPham sp LEFT JOIN BienTheSanPham b ON b.MaSP = sp.MaSP " +
+            "WHERE sp.TrangThai = 1 AND sp.DeletedAt IS NULL " +
+            "AND (:categoryId IS NULL OR sp.MaDM = :categoryId) " +
+            "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
+            "ORDER BY sp.MaSP DESC", nativeQuery = true)
+    List<BestSellerProjection> findListByCategoryNative(@Param("categoryId") Integer categoryId);
+
     List<Product> findByDeletedAtIsNull();
     List<Product> findByDeletedAtIsNotNull();
 
     // New: count active products by category (for delete guard)
     long countByCategoryAndDeletedAtIsNull(Category category);
+
+    // New: filter active products by category id
+    List<Product> findByCategory_IdAndDeletedAtIsNull(Integer categoryId);
 }

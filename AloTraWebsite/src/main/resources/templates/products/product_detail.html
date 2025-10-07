@@ -18,6 +18,11 @@
             .sku { color:#6c757d; font-size:.9rem; }
             .old-price { text-decoration: line-through; color:#6c757d; font-size:.95rem; }
             .discount-badge { background:#dc3545; color:#fff; font-weight:600; border-radius:.25rem; padding:.25rem .5rem; }
+            .rating-stars { color:#f1b000; }
+            /* Reviews */
+            .review-card { border:1px solid #eee; border-radius:8px; padding:12px; margin-bottom:12px; background:#fff; }
+            .review-author { font-weight:600; }
+            .review-date { color:#6c757d; font-size:.9rem; }
         </style>
     </th:block>
 </head>
@@ -38,6 +43,7 @@
         .sku { color:#6c757d; font-size:.9rem; }
         .old-price { text-decoration: line-through; color:#6c757d; font-size:.95rem; }
         .discount-badge { background:#dc3545; color:#fff; font-weight:600; border-radius:.25rem; padding:.25rem .5rem; }
+        .rating-stars { color:#f1b000; }
     </style>
 
     <nav aria-label="breadcrumb" class="container mt-3">
@@ -61,6 +67,7 @@
                         <h3 class="mb-1" th:text="${product.name}">Tên sản phẩm</h3>
                         <div class="sku">SKU: <span th:text="${product.id}">#</span></div>
                     </div>
+                    <div id="ratingSummary" class="small text-muted mb-2">Đang tải đánh giá...</div>
 
                     <!-- Discount badge if exists -->
                     <div class="mt-1" th:if="${discountPercent != null and discountPercent > 0}">
@@ -157,12 +164,39 @@
                 </form>
             </div>
         </div>
+
+        <!-- Reviews Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="mb-3">Đánh giá của khách hàng</h5>
+                        <div th:if="${#lists.isEmpty(reviews)}" class="text-muted">Chưa có đánh giá nào cho sản phẩm này.</div>
+                        <div th:each="rv : ${reviews}" class="review-card">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <div class="review-author" th:text="${rv.customer != null ? rv.customer.fullName : 'Ẩn danh'}">Khách hàng</div>
+                                <div class="review-date" th:text="${rv.createdAt != null ? #temporals.format(rv.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></div>
+                            </div>
+                            <div class="mb-1">
+                                <span class="rating-stars">
+                                    <span th:each="i : ${#numbers.sequence(1, rv.stars)}">★</span>
+                                    <span class="text-muted" th:each="i : ${#numbers.sequence(rv.stars+1, 5)}">☆</span>
+                                </span>
+                                <span class="ms-2 small text-muted" th:text="${rv.stars} + ' / 5'"></span>
+                            </div>
+                            <div th:if="${rv.comment}" th:text="${rv.comment}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Fallback inline JS if layout doesn't include additionalJs -->
     <script id="pd-inline-script" th:inline="javascript">
         (function(){
             const discountPercent = /*[[${discountPercent}]]*/ 0; // null -> 0
+            const productId = /*[[${product.id}]]*/ 0;
             function parseVND(s){ return Number(s || 0); }
             function formatVND(n){ try { return new Intl.NumberFormat('vi-VN').format(n) + ' ₫'; } catch(e){ return n + ' ₫'; } }
             function currentVariantPrice(){
@@ -241,6 +275,26 @@
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', recalc);
             } else { recalc(); }
+
+            // Fetch rating summary for this product
+            function renderStars(avg){
+                const full = Math.floor(avg);
+                const half = (avg - full) >= 0.5;
+                let html = '';
+                for (let i=0;i<full;i++) html += '★';
+                if (half) html += '☆';
+                for (let i=full + (half?1:0); i<5; i++) html += '☆';
+                return `<span class="rating-stars">${html}</span>`;
+            }
+            const rs = document.getElementById('ratingSummary');
+            try {
+                const base = (window.ctx || '').replace(/\/$/, '');
+                fetch(`${base}/api/products/${productId}/rating`).then(r=>r.json()).then(data=>{
+                    const avg = Number(data.avg||0);
+                    const cnt = Number(data.count||0);
+                    if (rs) rs.innerHTML = `${renderStars(avg)} <span class=\"ms-2\">${avg.toFixed(1)}/5 · ${cnt} đánh giá</span>`;
+                }).catch(()=>{ if (rs) rs.textContent=''; });
+            } catch(e) { if (rs) rs.textContent=''; }
         })();
     </script>
 </th:block>

@@ -4,6 +4,7 @@ body {
     line-height: 1.6;
     color: #333;
     background-color: #f8f9fa;
+
 }
 
 .section-title {
@@ -17,6 +18,7 @@ body {
 main{
 	padding-top: 15px;
 }
+
 
 /* --------- HEADER STYLES (CỐ ĐỊNH VÀ HIỆN ĐẠI) --------- */
 .navbar-top {
@@ -105,7 +107,7 @@ main {
 /* --------- HERO SECTION --------- */
 .hero-section {
     background: url('/alotra-website/images/banner3.png') no-repeat center center;
-    background-size: cover;
+	background-size: 100% 100%;
     min-height: 400px;
     display: flex;
     align-items: center;
@@ -113,7 +115,6 @@ main {
     color: white;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     margin-bottom: 50px;
-    border-radius: 12px;
 }
 .hero-section h1 {
     font-size: 3.5rem;

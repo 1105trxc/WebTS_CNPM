@@ -41,6 +41,26 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    // New: list products by category (null => all)
+    public List<ProductDTO> listByCategory(Integer categoryId) {
+        return productRepository.findListByCategoryNative(categoryId).stream()
+                .map(row -> {
+                    BigDecimal minBase = row.getPrice();
+                    Integer percent = row.getId() != null ? promoRepo.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    BigDecimal finalPrice = applyPercent(minBase, percent);
+                    ProductDTO dto = new ProductDTO(
+                            row.getId(),
+                            row.getName(),
+                            (row.getImageUrl() != null && !row.getImageUrl().isBlank()) ? row.getImageUrl() : "/images/placeholder.png",
+                            finalPrice
+                    );
+                    dto.setOriginalPrice(minBase);
+                    dto.setDiscountPercent(percent);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
     private BigDecimal applyPercent(BigDecimal base, Integer percent) {
         if (base == null) return null;
         if (percent == null || percent <= 0) return base;

@@ -30,6 +30,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import com.alotra.service.OtpService;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+// import org.springframework.web.bind.annotation.ResponseBody; // removed: avoid duplicate API mapping
 
 @Controller
 public class HomeController {
@@ -44,6 +47,7 @@ public class HomeController {
     // Promotions
     @Autowired private SuKienKhuyenMaiRepository promoRepo;
     @Autowired private KhuyenMaiSanPhamRepository promoLinkRepo;
+    @Autowired private com.alotra.service.CategoryService categoryService; // new
 
     @GetMapping("/")
     public String homePage(Model model) {
@@ -78,12 +82,20 @@ public class HomeController {
         return "home/index"; // Trả về tên file template (home/index.html)
     }
 
-    // Tạm thời tạo các controller cơ bản cho các link trên header/footer để tránh lỗi 404
+    // Catalog page: categories + products with client-side AJAX filtering
     @GetMapping("/products")
-    public String productsPage(Model model) {
+    public String productsPage(@RequestParam(required = false) Integer categoryId, Model model) {
         model.addAttribute("pageTitle", "Sản Phẩm của AloTra");
-        return "products/product_list"; // Sẽ tạo trang này sau
+        var categories = categoryService.findActive();
+        model.addAttribute("categories", categories);
+        // Initial list: by selected category when provided, else all
+        List<ProductDTO> initial = productService.listByCategory(categoryId);
+        model.addAttribute("products", initial);
+        model.addAttribute("selectedCategoryId", categoryId);
+        return "products/product_list"; // client renders grid and filters
     }
+
+    // Note: JSON API for catalog is provided by CatalogApiController (/api/catalog/products)
 
     @GetMapping("/about")
     public String aboutPage(Model model) {

@@ -4,7 +4,16 @@ $(document).ready(function() {
     console.log("AloTra Website - Frontend Initialized!");
 
     // ===================================================================
-    // LOGIC CHO NÚT "XEM THÊM" SẢN PHẨM
+    // GLOBALS: context path + CSRF
+    // ===================================================================
+    const ctx = (window.ctx || '').replace(/\/$/, '') + '/';
+    const csrfToken = $('meta[name="_csrf"]').attr('content');
+    const csrfHeader = $('meta[name="_csrf_header"]').attr('content');
+
+    function api(url) { return ctx + url.replace(/^\//, ''); }
+
+    // ===================================================================
+    // VIEW MORE buttons
     // ===================================================================
     const productContainer = $("#product-list-container");
     const viewMoreBtn = $("#view-more-btn");
@@ -20,110 +29,104 @@ $(document).ready(function() {
         });
     }
 
-    // ===================================================================
-    // HIỆU ỨNG CUỘN MƯỢT (SMOOTH SCROLL) - ĐÃ SỬA LỖI
-    // ===================================================================
+    // Smooth scroll for in-page anchors
     $('a[href^="#"]').on('click', function(event) {
         const href = $(this).attr('href');
-
-        // Chỉ thực hiện cuộn mượt nếu href không phải là "#" đơn thuần
-        if (href.length > 1) {
+        if (href && href.length > 1) {
             const target = $(href);
             if (target.length) {
                 event.preventDefault();
-                $('html, body').stop().animate({
-                    scrollTop: target.offset().top
-                }, 800);
+                $('html, body').stop().animate({ scrollTop: target.offset().top }, 800);
             }
         }
     });
 
     // ===================================================================
-    // CẤU HÌNH AJAX TOÀN CỤC ĐỂ GỬI JWT
+    // CART BADGE SYNC
     // ===================================================================
-    $.ajaxSetup({
-        beforeSend: function(xhr) {
-            const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
-            if (token) {
-                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-            }
-        },
-        error: function(xhr) {
-            if (xhr.status === 401 || xhr.status === 403) {
-                if (window.location.pathname.indexOf('/login') === -1) {
-                    alert('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
-                    localStorage.removeItem('jwt_token');
-                    sessionStorage.removeItem('jwt_token');
-                    window.location.href = '/alotra-website/login';
-                }
-            }
-        }
-    });
-
-    // ... (Các chức năng khác giữ nguyên) ...
-
-    // ===================================================================
-    // CHỨC NĂNG THÊM VÀO GIỎ HÀNG
-    // ===================================================================
-    $(document).on('click', '.btn-add-to-cart', function(e) {
-        e.preventDefault();
-
-        const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
-        if (!token) {
-            alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.');
-            window.location.href = '/alotra-website/login?redirect=' + encodeURIComponent(window.location.pathname);
-            return;
-        }
-
-        const productId = $(this).data('product-id');
-        if (!productId) {
-            alert("Không tìm thấy ID sản phẩm.");
-            return;
-        }
-
+    const $badge = $('#cart-count-badge');
+    function setBadge(n) {
+        const v = Number(n || 0);
+        if ($badge.length) $badge.text(v);
+    }
+    function refreshCartCount() {
         $.ajax({
-            url: '/api/cart/add',
-            type: 'POST',
+            url: api('api/cart/count'),
+            method: 'GET',
+            success: function(res){ setBadge(res && typeof res.count !== 'undefined' ? res.count : 0); },
+            error: function(){ /* ignore when not logged in */ setBadge(0); }
+        });
+    }
+
+    // call on load and every 60s
+    refreshCartCount();
+    setInterval(refreshCartCount, 60000);
+
+    // ===================================================================
+    // ADD TO CART + BUY NOW
+    // ===================================================================
+    function parseProductIdFromHref(href) {
+        try {
+            const url = new URL(href, window.location.origin);
+            const pid = url.searchParams.get('productId');
+            return pid ? parseInt(pid, 10) : null;
+        } catch { return null; }
+    }
+
+    $(document).on('click', '.btn-add-to-cart', function(e) {
+        const $btn = $(this);
+        const go = ($btn.data('go') || '').toString(); // 'home' or 'cart' or ''
+        let productId = $btn.data('product-id');
+        if (!productId) {
+            const href = $btn.attr('href') || '';
+            productId = parseProductIdFromHref(href);
+        }
+        if (!productId) {
+            // fall back: let the default link work
+            return;
+        }
+        e.preventDefault();
+        // POST /api/cart/add
+        $.ajax({
+            url: api('api/cart/add'),
+            method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ productId: productId, quantity: 1 }),
-            success: function(response) {
-                alert('Đã thêm sản phẩm vào giỏ hàng!');
-            },
-            error: function(xhr) {
-                if (xhr.status !== 401 && xhr.status !== 403) {
-                     alert('Không thể thêm sản phẩm: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Lỗi không xác định'));
+            beforeSend: function(xhr){ if (csrfToken && csrfHeader) xhr.setRequestHeader(csrfHeader, csrfToken); },
+            success: function(res){
+                setBadge(res && typeof res.count !== 'undefined' ? res.count : undefined);
+                if (go === 'cart') {
+                    window.location.href = api('cart');
+                } else if (go === 'home') {
+                    window.location.href = api('');
+                } else {
+                    // stay and show feedback
+                    try { bootstrap.Toast && showToast('Đã thêm vào giỏ hàng.'); } catch { alert('Đã thêm vào giỏ hàng.'); }
                 }
-            }
+            },
+            statusCode: {
+                401: function(){ window.location.href = api('login'); }
+            },
+            error: function(xhr){ if (xhr.status !== 401) alert('Không thể thêm sản phẩm.'); }
         });
     });
 
-    // ===================================================================
-    // CHỨC NĂNG ĐĂNG XUẤT
-    // ===================================================================
-    $(document).on('click', '#logoutBtn', function(e) {
-        e.preventDefault();
-        localStorage.removeItem('jwt_token');
-        sessionStorage.removeItem('jwt_token');
-        alert('Bạn đã đăng xuất thành công.');
-        window.location.href = '/alotra-website/';
-    });
-
-    // ===================================================================
-    // KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP VÀ CẬP NHẬT GIAO DIỆN
-    // ===================================================================
-    window.checkLoginStatus = function() {
-        const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
-        const authLink = $('#authLink');
-        const logoutNavItem = $('#logoutNavItem');
-
-        if (token) {
-            authLink.html('<i class="fas fa-user"></i> Tài khoản').attr('href', '/alotra-website/profile');
-            logoutNavItem.removeClass('d-none');
-        } else {
-            authLink.html('<i class="fas fa-user"></i> Đăng nhập').attr('href', '/alotra-website/login');
-            logoutNavItem.addClass('d-none');
+    function showToast(msg){
+        const id = 'cart-toast';
+        let el = document.getElementById(id);
+        if (!el) {
+            const tpl = document.createElement('div');
+            tpl.id = id;
+            tpl.className = 'toast align-items-center text-bg-success border-0 position-fixed';
+            tpl.style.right = '16px';
+            tpl.style.bottom = '16px';
+            tpl.setAttribute('role','alert');
+            tpl.innerHTML = '<div class="d-flex"><div class="toast-body"></div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
+            document.body.appendChild(tpl);
+            el = tpl;
         }
-    };
-
-    checkLoginStatus();
+        el.querySelector('.toast-body').textContent = msg;
+        const t = new bootstrap.Toast(el, { delay: 1500 });
+        t.show();
+    }
 });

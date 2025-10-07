@@ -27,19 +27,22 @@ public class ProductController {
     private final CartService cartService;
     private final KhachHangService khService;
     private final KhuyenMaiSanPhamRepository promoRepo;
+    private final com.alotra.service.ReviewService reviewService;
 
     public ProductController(ProductRepository productRepo,
                              ProductVariantRepository variantRepo,
                              ToppingRepository toppingRepo,
                              CartService cartService,
                              KhachHangService khService,
-                             KhuyenMaiSanPhamRepository promoRepo) {
+                             KhuyenMaiSanPhamRepository promoRepo,
+                             com.alotra.service.ReviewService reviewService) {
         this.productRepo = productRepo;
         this.variantRepo = variantRepo;
         this.toppingRepo = toppingRepo;
         this.cartService = cartService;
         this.khService = khService;
         this.promoRepo = promoRepo;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/{id}")
@@ -55,6 +58,9 @@ public class ProductController {
         BigDecimal basePrice = (!variants.isEmpty() ? variants.get(0).getPrice() : BigDecimal.ZERO);
         BigDecimal discountedPrice = applyPercent(basePrice, discountPercent);
 
+        // Fetch reviews for this product (newest first)
+        java.util.List<com.alotra.entity.DanhGia> reviews = reviewService.listByProduct(id, null);
+
         model.addAttribute("pageTitle", p.getName());
         model.addAttribute("product", p);
         model.addAttribute("variants", variants);
@@ -62,6 +68,7 @@ public class ProductController {
         model.addAttribute("discountPercent", discountPercent);
         model.addAttribute("basePrice", basePrice);
         model.addAttribute("discountedPrice", discountedPrice);
+        model.addAttribute("reviews", reviews);
         return "products/product_detail";
     }
 
@@ -97,7 +104,7 @@ public class ProductController {
         try {
             cartService.addItemWithOptions(kh, variantId, qty, toppingQty, note);
             ra.addFlashAttribute("message", "Đã thêm vào giỏ hàng");
-            return "redirect:/cart";
+            return "redirect:/";
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());
             return "redirect:/products/" + id;

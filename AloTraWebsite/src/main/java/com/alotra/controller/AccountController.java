@@ -4,6 +4,7 @@ import com.alotra.entity.KhachHang;
 import com.alotra.security.KhachHangUserDetails;
 import com.alotra.service.CustomerOrderService;
 import com.alotra.service.KhachHangService;
+import com.alotra.service.ReviewService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -17,6 +18,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/account") // Tất cả URL sẽ có tiền tố /account
@@ -25,13 +27,16 @@ public class AccountController {
     private final CustomerOrderService orderService;
     private final KhachHangService khachHangService;
     private final PasswordEncoder passwordEncoder;
+    private final ReviewService reviewService; // new
 
     public AccountController(CustomerOrderService orderService,
                              KhachHangService khachHangService,
-                             PasswordEncoder passwordEncoder) {
+                             PasswordEncoder passwordEncoder,
+                             ReviewService reviewService) {
         this.orderService = orderService;
         this.khachHangService = khachHangService;
         this.passwordEncoder = passwordEncoder;
+        this.reviewService = reviewService;
     }
 
     // Profile - view form
@@ -124,10 +129,21 @@ public class AccountController {
         for (var it : items) {
             toppings.put(it.id, orderService.listOrderItemToppings(it.id));
         }
+        // Reviews map: lineId -> review (if any) for current user
+        List<Integer> lineIds = items.stream().map(it -> it.id).collect(Collectors.toList());
+        Map<Integer, com.alotra.entity.DanhGia> reviewsByLine = reviewService.findExistingByCustomerAndLines(current.getId(), lineIds);
+        boolean eligibleForReview = reviewService.isOrderEligibleForReview(order.status, order.paymentStatus);
+        // Compute edit-allowed per line
+        Map<Integer, Boolean> reviewEditableByLine = new HashMap<>();
+        reviewsByLine.forEach((lineId, rv) -> reviewEditableByLine.put(lineId, reviewService.canEdit(rv)));
         model.addAttribute("pageTitle", "Chi tiết đơn #" + id);
         model.addAttribute("order", order);
         model.addAttribute("items", items);
         model.addAttribute("toppings", toppings);
+        model.addAttribute("reviewsByLine", reviewsByLine);
+        model.addAttribute("eligibleForReview", eligibleForReview);
+        model.addAttribute("reviewEditableByLine", reviewEditableByLine);
+        model.addAttribute("editWindowMinutes", com.alotra.service.ReviewService.EDIT_WINDOW.toMinutes());
         return "account/order-detail";
     }
 

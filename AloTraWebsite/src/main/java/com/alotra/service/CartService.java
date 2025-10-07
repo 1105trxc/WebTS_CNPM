@@ -163,6 +163,15 @@ public class CartService {
         return itemRepo.findByCart(c);
     }
 
+    // --- New: total quantity of all items for badge ---
+    public int getItemCount(KhachHang kh) {
+        try {
+            return listItems(kh).stream().mapToInt(GioHangCT::getQuantity).sum();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     @Transactional
     public void updateQuantity(KhachHang kh, Integer itemId, int qty) {
         GioHangCT item = itemRepo.findById(itemId).orElseThrow();
@@ -397,5 +406,35 @@ public class CartService {
         BigDecimal base = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
         item.setLineTotal(base.add(toppingSum));
         itemRepo.save(item);
+    }
+
+    // === New: change variant (size) of a cart item ===
+    @Transactional
+    public void changeVariant(KhachHang kh, Integer itemId, Integer newVariantId) {
+        GioHangCT item = itemRepo.findById(itemId).orElseThrow();
+        validateOwnership(kh, item);
+        ProductVariant target = variantRepo.findById(newVariantId).orElse(null);
+        if (target == null || target.getStatus() != null && target.getStatus() == 0) {
+            throw new IllegalArgumentException("Biến thể không hợp lệ hoặc đang ngừng bán");
+        }
+        // Allow changing only within the same product
+        Integer curProductId = item.getVariant().getProduct().getId();
+        Integer targetProductId = target.getProduct().getId();
+        if (!Objects.equals(curProductId, targetProductId)) {
+            throw new IllegalArgumentException("Không thể đổi sang sản phẩm khác");
+        }
+        // Update unit price (apply active promotion) and variant
+        Integer percent = promoRepo.findActiveMaxDiscountPercentForProduct(targetProductId);
+        BigDecimal newUnitPrice = applyPercent(target.getPrice(), percent);
+        item.setVariant(target);
+        item.setUnitPrice(newUnitPrice);
+        // Recompute total
+        recomputeLineTotal(item);
+    }
+
+    // Expose variant list for a product (used to render size options in cart)
+    public List<ProductVariant> listVariantsForProduct(Product product) {
+        if (product == null) return List.of();
+        return variantRepo.findByProduct(product);
     }
 }

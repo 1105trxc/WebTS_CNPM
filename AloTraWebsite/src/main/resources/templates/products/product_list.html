@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/default_layout :: body(~{::content}, ~{::additionalCss}, null)}">
+<head>
+    <title th:replace="~{layouts/default_layout :: title(pageTitle=${pageTitle} ?: 'Sản phẩm')}"/>
+</head>
+<body>
+<th:block th:fragment="content">
+    <div class="container my-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Menu sản phẩm</h3>
+        </div>
+
+        <div class="catalog-layout">
+            <!-- Sidebar: Categories -->
+            <aside class="catalog-sidebar">
+                <div class="list-group">
+                    <a class="list-group-item" data-cat="" th:href="@{/products}"
+                       th:classappend="${selectedCategoryId} == null ? ' active' : ''">Tất cả</a>
+                    <a class="list-group-item" th:each="c : ${categories}" th:text="${c.name}"
+                       th:attr="data-cat=${c.id}"
+                       th:href="@{/products(categoryId=${c.id})}"
+                       th:classappend="${selectedCategoryId} != null and ${selectedCategoryId} == ${c.id} ? ' active' : ''"></a>
+                </div>
+            </aside>
+
+            <!-- Products Grid -->
+            <section>
+                <div id="catalogGrid" class="catalog-grid">
+                    <div class="card product-card" th:each="p : ${products}">
+                        <span class="badge bg-danger badge-discount" th:if="${p.discountPercent != null and p.discountPercent > 0}" th:text="${'-' + p.discountPercent + '%'}">-10%</span>
+                        <a th:href="@{'/products/' + ${p.id}}">
+                            <div class="product-thumb">
+                                <img th:src="${p.imageUrl != null ? p.imageUrl : '/images/placeholder.png'}" th:alt="${p.name}">
+                            </div>
+                        </a>
+                        <div class="card-body">
+                            <h6 class="card-title mb-1">
+                                <a class="text-decoration-none text-dark" th:href="@{'/products/' + ${p.id}}" th:text="${p.name}">Tên</a>
+                            </h6>
+                            <div>
+                                <div th:if="${p.discountPercent != null and p.discountPercent > 0}">
+                                    <div class="old" th:text="${#numbers.formatDecimal(p.originalPrice,0,'COMMA',0,'POINT')} + ' ₫'"></div>
+                                    <div class="price" th:text="${#numbers.formatDecimal(p.price,0,'COMMA',0,'POINT')} + ' ₫'"></div>
+                                </div>
+                                <div th:if="${p.discountPercent == null or p.discountPercent <= 0}">
+                                    <div class="price" th:text="${#numbers.formatDecimal(p.price,0,'COMMA',0,'POINT')} + ' ₫'"></div>
+                                </div>
+                            </div>
+                            <a class="btn btn-success btn-sm btn-buy mt-1" th:href="@{'/products/' + ${p.id}}">Đặt mua</a>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(products)}" class="text-muted">Chưa có sản phẩm.</div>
+                </div>
+            </section>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>
