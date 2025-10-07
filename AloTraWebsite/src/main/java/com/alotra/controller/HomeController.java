@@ -28,6 +28,8 @@ import com.alotra.repository.KhuyenMaiSanPhamRepository;
 import com.alotra.entity.SuKienKhuyenMai;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import com.alotra.service.OtpService;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class HomeController {
@@ -37,6 +39,8 @@ public class HomeController {
     private KhachHangService khachHangService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private OtpService otpService;
     // Promotions
     @Autowired private SuKienKhuyenMaiRepository promoRepo;
     @Autowired private KhuyenMaiSanPhamRepository promoLinkRepo;
@@ -116,7 +120,8 @@ public class HomeController {
     public String processRegister(@ModelAttribute("khachHang") KhachHang khachHang,
                                   BindingResult bindingResult,
                                   @RequestParam("confirmPassword") String confirmPassword,
-                                  Model model) {
+                                  Model model,
+                                  RedirectAttributes ra) {
         model.addAttribute("pageTitle", "Đăng Ký Tài Khoản");
         // Validate password confirmation
         if (khachHang.getPasswordHash() == null || !khachHang.getPasswordHash().equals(confirmPassword)) {
@@ -135,18 +140,46 @@ public class HomeController {
         if (bindingResult.hasErrors()) {
             return "auth/register";
         }
-        // Hash password and set status
+        // Hash password and set status to INACTIVE until OTP verified
         khachHang.setPasswordHash(passwordEncoder.encode(khachHang.getPasswordHash()));
-        khachHang.setStatus(1); // 1 = active
-        khachHangService.save(khachHang);
-        model.addAttribute("message", "Đăng ký thành công! Vui lòng đăng nhập.");
-        return "redirect:/login";
+        khachHang.setStatus(0); // 0 = inactive until verified
+        khachHang = khachHangService.save(khachHang);
+        // Send OTP to email
+        otpService.sendRegisterOtp(khachHang);
+        // Redirect to verify OTP page
+        ra.addFlashAttribute("msg", "Đã gửi mã OTP vào email. Vui lòng kiểm tra hộp thư.");
+        return "redirect:/verify-otp?email=" + khachHang.getEmail();
     }
 
-    @GetMapping("/profile")
-    public String profilePage(Model model) {
-        model.addAttribute("pageTitle", "Thông Tin Tài Khoản");
-        return "profile/profile"; // Sẽ tạo trang này sau
+    @GetMapping("/verify-otp")
+    public String showVerifyOtp(@RequestParam(required = false) String email, Model model) {
+        model.addAttribute("pageTitle", "Xác thực email");
+        model.addAttribute("email", email);
+        return "auth/verify-otp";
+    }
+
+    @PostMapping("/verify-otp")
+    public String doVerifyOtp(@RequestParam String email,
+                              @RequestParam String code,
+                              RedirectAttributes ra) {
+        StringBuilder err = new StringBuilder();
+        boolean ok = otpService.verifyRegisterOtp(email, code, err);
+        if (ok) {
+            return "redirect:/login?activated=1";
+        }
+        ra.addFlashAttribute("error", err.length() > 0 ? err.toString() : "Xác thực thất bại.");
+        return "redirect:/verify-otp?email=" + email;
+    }
+
+    @PostMapping("/resend-otp")
+    public String resendOtp(@RequestParam String email, RedirectAttributes ra) {
+        boolean ok = otpService.resendRegisterOtp(email);
+        if (ok) {
+            ra.addFlashAttribute("msg", "Đã gửi lại mã OTP vào email.");
+        } else {
+            ra.addFlashAttribute("error", "Không thể gửi lại mã OTP.");
+        }
+        return "redirect:/verify-otp?email=" + email;
     }
 
     // Simple view-model for promotions on homepage

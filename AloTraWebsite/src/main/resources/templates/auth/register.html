@@ -1,63 +1,90 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/default_layout :: body(~{::content}, null, null)}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:replace="~{layouts/default_layout :: title(pageTitle='Đăng ký tài khoản')}"></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Đăng Ký AloTra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <style>
+        body { background-color: #f8f9fa; }
+        .btn-alotra { background:#198754; color:#fff; }
+        .btn-alotra:hover { background:#157347; color:#fff; }
+    </style>
 </head>
 <body>
-<div class="container">
-    <th:block th:fragment="content">
-        <h2>Đăng ký tài khoản</h2>
-        <form th:action="@{/register}" th:object="${khachHang}" method="post">
-            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg border-0 rounded-lg mt-5">
+                <div class="card-header bg-success text-white text-center">
+                    <h3 class="fw-light my-4">Đăng Ký</h3>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/register}" th:object="${khachHang}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-            <!-- Validation summary: only check fields when khachHang exists -->
-            <div th:if="${khachHang != null} and ${#fields.hasErrors()}" class="error">
-                <p th:each="err : ${#fields.errors('*')}" th:text="${err}"></p>
-            </div>
+                        <!-- Validation summary inside th:object context -->
+                        <div th:if="${#fields.hasErrors()}" class="alert alert-danger" role="alert">
+                            <div th:each="err : ${#fields.errors('*')}" th:text="${err}"></div>
+                        </div>
 
-            <!-- Username -->
-            <div>
-                <label for="username">Tên đăng nhập:</label>
-                <input type="text" id="username" th:field="*{username}" required />
-            </div>
+                        <div class="row g-3">
+                            <!-- Username -->
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="username" th:field="*{username}" placeholder="Tên đăng nhập" required />
+                                    <label for="username">Tên đăng nhập</label>
+                                </div>
+                            </div>
+                            <!-- Full name -->
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="fullName" th:field="*{fullName}" placeholder="Họ tên" required />
+                                    <label for="fullName">Họ tên</label>
+                                </div>
+                            </div>
+                            <!-- Email -->
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="Email" required />
+                                    <label for="email">Email</label>
+                                </div>
+                            </div>
+                            <!-- Phone -->
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="phone" th:field="*{phone}" placeholder="Số điện thoại" required />
+                                    <label for="phone">Số điện thoại</label>
+                                </div>
+                            </div>
+                            <!-- Password (bound to entity field) -->
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input type="password" class="form-control" id="passwordHash" th:field="*{passwordHash}" placeholder="Mật khẩu" required />
+                                    <label for="passwordHash">Mật khẩu</label>
+                                </div>
+                            </div>
+                            <!-- Confirm Password (not bound) -->
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu" required />
+                                    <label for="confirmPassword">Nhập lại mật khẩu</label>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- Full name -->
-            <div>
-                <label for="fullName">Họ tên:</label>
-                <input type="text" id="fullName" th:field="*{fullName}" required />
+                        <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
+                            <a class="small text-success" th:href="@{/login}">Đã có tài khoản? Đăng nhập</a>
+                            <button type="submit" class="btn btn-alotra">Đăng Ký</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-
-            <!-- Email -->
-            <div>
-                <label for="email">Email:</label>
-                <input type="email" id="email" th:field="*{email}" required />
-            </div>
-
-            <!-- Phone -->
-            <div>
-                <label for="phone">Số điện thoại:</label>
-                <input type="text" id="phone" th:field="*{phone}" required />
-            </div>
-
-            <!-- Password bound to entity field -->
-            <div>
-                <label for="passwordHash">Mật khẩu:</label>
-                <input type="password" id="passwordHash" th:field="*{passwordHash}" required />
-            </div>
-
-            <!-- Confirm Password (not bound) -->
-            <div>
-                <label for="confirmPassword">Nhập lại mật khẩu:</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" required />
-            </div>
-
-            <div>
-                <button type="submit">Đăng ký</button>
-            </div>
-        </form>
-        <p>Đã có tài khoản? <a th:href="@{/login}">Đăng nhập</a></p>
-    </th:block>
+        </div>
+    </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
