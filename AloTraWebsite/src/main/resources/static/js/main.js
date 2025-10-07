@@ -129,4 +129,26 @@ $(document).ready(function() {
         const t = new bootstrap.Toast(el, { delay: 1500 });
         t.show();
     }
+
+    // ===================================================================
+    // MEGA MENU: mobile/touch toggle
+    // ===================================================================
+    const $megaItem = $('.has-mega');
+    const $megaToggle = $('.mega-toggle');
+    function isMobileNav(){ return window.matchMedia('(max-width: 991.98px)').matches; }
+    $megaToggle.on('click', function(e){
+        if (isMobileNav()) {
+            e.preventDefault();
+            const $li = $(this).closest('.has-mega');
+            const willOpen = !$li.hasClass('open');
+            $('.has-mega').removeClass('open');
+            if (willOpen) $li.addClass('open');
+        }
+    });
+    $(document).on('click', function(e){
+        if (!$(e.target).closest('.has-mega').length) {
+            $('.has-mega').removeClass('open');
+        }
+    });
+    $(document).on('keydown', function(e){ if (e.key === 'Escape') $('.has-mega').removeClass('open'); });
 });
