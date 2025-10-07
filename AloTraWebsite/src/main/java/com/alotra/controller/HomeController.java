@@ -109,78 +109,7 @@ public class HomeController {
         return "policy/policy"; // Sẽ tạo trang này sau
     }
 
-    @GetMapping("/register")
-    public String registerPage(Model model) {
-        model.addAttribute("pageTitle", "Đăng Ký Tài Khoản");
-        model.addAttribute("khachHang", new KhachHang());
-        return "auth/register";
-    }
-
-    @PostMapping("/register")
-    public String processRegister(@ModelAttribute("khachHang") KhachHang khachHang,
-                                  BindingResult bindingResult,
-                                  @RequestParam("confirmPassword") String confirmPassword,
-                                  Model model,
-                                  RedirectAttributes ra) {
-        model.addAttribute("pageTitle", "Đăng Ký Tài Khoản");
-        // Validate password confirmation
-        if (khachHang.getPasswordHash() == null || !khachHang.getPasswordHash().equals(confirmPassword)) {
-            bindingResult.rejectValue("passwordHash", "error.khachHang", "Mật khẩu xác nhận không khớp.");
-        }
-        // Check for duplicate username/email/phone
-        if (khachHangService.findByUsername(khachHang.getUsername()) != null) {
-            bindingResult.rejectValue("username", "error.khachHang", "Tên đăng nhập đã được sử dụng.");
-        }
-        if (khachHangService.findByEmail(khachHang.getEmail()) != null) {
-            bindingResult.rejectValue("email", "error.khachHang", "Email đã được sử dụng.");
-        }
-        if (khachHangService.findByPhone(khachHang.getPhone()) != null) {
-            bindingResult.rejectValue("phone", "error.khachHang", "Số điện thoại đã được sử dụng.");
-        }
-        if (bindingResult.hasErrors()) {
-            return "auth/register";
-        }
-        // Hash password and set status to INACTIVE until OTP verified
-        khachHang.setPasswordHash(passwordEncoder.encode(khachHang.getPasswordHash()));
-        khachHang.setStatus(0); // 0 = inactive until verified
-        khachHang = khachHangService.save(khachHang);
-        // Send OTP to email
-        otpService.sendRegisterOtp(khachHang);
-        // Redirect to verify OTP page
-        ra.addFlashAttribute("msg", "Đã gửi mã OTP vào email. Vui lòng kiểm tra hộp thư.");
-        return "redirect:/verify-otp?email=" + khachHang.getEmail();
-    }
-
-    @GetMapping("/verify-otp")
-    public String showVerifyOtp(@RequestParam(required = false) String email, Model model) {
-        model.addAttribute("pageTitle", "Xác thực email");
-        model.addAttribute("email", email);
-        return "auth/verify-otp";
-    }
-
-    @PostMapping("/verify-otp")
-    public String doVerifyOtp(@RequestParam String email,
-                              @RequestParam String code,
-                              RedirectAttributes ra) {
-        StringBuilder err = new StringBuilder();
-        boolean ok = otpService.verifyRegisterOtp(email, code, err);
-        if (ok) {
-            return "redirect:/login?activated=1";
-        }
-        ra.addFlashAttribute("error", err.length() > 0 ? err.toString() : "Xác thực thất bại.");
-        return "redirect:/verify-otp?email=" + email;
-    }
-
-    @PostMapping("/resend-otp")
-    public String resendOtp(@RequestParam String email, RedirectAttributes ra) {
-        boolean ok = otpService.resendRegisterOtp(email);
-        if (ok) {
-            ra.addFlashAttribute("msg", "Đã gửi lại mã OTP vào email.");
-        } else {
-            ra.addFlashAttribute("error", "Không thể gửi lại mã OTP.");
-        }
-        return "redirect:/verify-otp?email=" + email;
-    }
+    // Removed legacy /register and OTP endpoints to use RegistrationController two-step flow
 
     // Simple view-model for promotions on homepage
     public static class PromotionCard {

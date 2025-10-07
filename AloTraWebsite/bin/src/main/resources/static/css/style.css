@@ -1,0 +1,267 @@
+/* --------- CÁC STYLE TỔNG THỂ --------- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+.section-title {
+    text-align: center;
+    margin-top: 50px;
+    margin-bottom: 40px;
+    font-size: 2.5rem;
+    color: #006633;
+    font-weight: bold;
+}
+main{
+	padding-top: 15px;
+}
+
+/* --------- HEADER STYLES (CỐ ĐỊNH VÀ HIỆN ĐẠI) --------- */
+.navbar-top {
+    z-index: 2021;
+    position: relative;
+}
+.navbar-bottom {
+    z-index: 2020;
+    position: relative;
+}
+.dropdown-menu {
+    z-index: 2100 !important;
+}
+.user-actions {
+    position: relative;
+    z-index: 2050;
+}
+.header-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    z-index: 2000;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.navbar-top {
+    background-color: white;
+    padding: 8px 0 4px 0;
+    border-bottom: 1px solid #eee;
+}
+.navbar-bottom {
+    background-color: #006633;
+    padding: 0;
+    border-bottom: 2px solid #004d26;
+}
+.navbar-brand img {
+    height: 50px;
+    transition: filter 0.2s;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.05));
+}
+.search-bar {
+    width: 320px;
+    margin-left: 28px;
+}
+.navbar-nav .nav-link {
+    color: white !important;
+    font-weight: 600;
+    padding: 10px 28px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    background-color: #004d26;
+    color: #ffeb3b !important;
+}
+.user-actions .nav-link {
+    color: #333 !important;
+    padding: 6px 14px;
+    border-radius: 7px;
+    font-weight: 500;
+    transition: background 0.18s, color 0.18s;
+    background: none;
+}
+
+.user-actions .nav-link:hover,
+.user-actions .nav-link:focus {
+    background: #006633;
+    color: #fff !important;
+    text-decoration: none;
+}
+@media (max-width: 991.98px) {
+    .search-bar { width: 100%; margin-left: 0; margin-top: 10px;}
+    .navbar-bottom .nav-link { padding: 10px 15px;}
+}
+
+/* Khi header fixed, đẩy main xuống đúng chiều cao header */
+main {
+    margin-top: 110px; /* Điều chỉnh đúng với tổng chiều cao thực tế header của bạn */
+    transition: margin-top 0.2s;
+}
+
+/* --------- HERO SECTION --------- */
+.hero-section {
+    background: url('/alotra-website/images/banner3.png') no-repeat center center;
+    background-size: cover;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    margin-bottom: 50px;
+    border-radius: 12px;
+}
+.hero-section h1 {
+    font-size: 3.5rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+.hero-section p {
+    font-size: 1.5rem;
+}
+.hero-section .btn {
+    background-color: #006633;
+    border-color: #006633;
+    color: white;
+    font-weight: bold;
+    padding: 10px 30px;
+    font-size: 1.2rem;
+    border-radius: 6px;
+}
+.hero-section .btn:hover {
+    background-color: #004d26;
+    border-color: #004d26;
+}
+
+/* --------- PRODUCT CARD STYLES --------- */
+.product-card {
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    transition: all 0.3s cubic-bezier(.45,.05,.55,.95);
+    background-color: white;
+    position: relative;
+    z-index: 1;
+}
+.product-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 12px 32px rgba(0, 102, 51, 0.15);
+}
+.product-card img {
+    height: 190px;
+    object-fit: cover;
+    width: 100%;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+}
+.product-card .card-body {
+    padding: 18px 14px 16px 14px;
+    text-align: center;
+}
+.product-card .card-title {
+    font-size: 1.12rem;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 10px;
+}
+.product-card .card-text {
+    color: #666;
+    font-size: 0.97rem;
+    margin-bottom: 10px;
+}
+.product-card .price {
+    font-size: 1.28rem;
+    font-weight: bold;
+    color: #006633;
+    margin-bottom: 15px;
+}
+.product-card .btn-add-to-cart {
+    background-color: #006633;
+    color: white;
+    border-radius: 6px;
+    font-weight: 700;
+    padding: 8px 24px;
+    transition: background 0.2s;
+    box-shadow: 0 2px 6px rgba(0,102,51,0.11);
+}
+.product-card .btn-add-to-cart:hover {
+    background-color: #004d26;
+    box-shadow: 0 6px 18px rgba(0,102,51,0.17);
+}
+
+/* --------- CARD Z-INDEX --------- */
+.product-card, .card {
+    z-index: 1;
+    position: relative;
+}
+
+/* --------- RESPONSIVE ADJUSTMENTS --------- */
+@media (max-width: 991.98px) {
+    .search-bar { width: 100%; margin-left: 0; margin-top: 10px;}
+    .navbar-bottom .navbar-nav { width: 100%; text-align: center;}
+    .navbar-bottom .nav-item { width: 100%;}
+    .navbar-bottom .nav-link { padding: 10px 15px;}
+    .hero-section { min-height: 300px; padding: 60px 0;}
+    .hero-section h1 { font-size: 2.5rem;}
+    .hero-section p { font-size: 1.2rem;}
+    .section-title { font-size: 2rem;}
+}
+
+@media (max-width: 767.98px) {
+    .hero-section { min-height: 200px; padding: 32px 0;}
+    .hero-section h1 { font-size: 1.6rem;}
+    .hero-section p { font-size: 0.97rem;}
+    .section-title { font-size: 1.3rem;}
+    .navbar-brand img { height: 38px;}
+    main { margin-top: 85px; }
+}
+
+/* --------- Footer Styles --------- */
+.footer-section {
+    background-color:  #004d26;
+    padding-top: 32px;
+    padding-bottom: 24px;
+    color: #adb5bd;
+}
+.footer-section h5 {
+    color: #ffffff;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+.footer-section p {
+    color: #adb5bd;
+}
+.footer-link {
+    color: #adb5bd;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: block;
+    margin-bottom: 8px;
+}
+.footer-link:hover {
+    color: #ffffff;
+    text-decoration: none;
+    padding-left: 5px;
+}
+.footer-social-icon {
+    display: inline-block;
+    height: 40px;
+    width: 40px;
+    background-color: rgba(255, 255, 255, 0.2);
+    margin: 0 10px 10px 0;
+    text-align: center;
+    line-height: 40px;
+    border-radius: 50%;
+    color: #ffffff;
+    transition: all 0.5s ease;
+    font-size: 1.5rem;
+}
+.footer-social-icon:hover {
+    color: #212529;
+    background-color: #ffffff;
+}

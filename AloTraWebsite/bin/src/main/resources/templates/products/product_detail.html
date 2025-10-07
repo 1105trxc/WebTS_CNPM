@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/default_layout :: body(~{::content}, ~{::additionalCss}, ~{::additionalJs})}">
+<head>
+    <title th:replace="~{layouts/default_layout :: title(pageTitle=${product.name})}"></title>
+    <th:block th:fragment="additionalCss">
+        <style>
+            .btn-option { border: 1px solid #198754; color: #198754; }
+            .btn-option.active, .btn-option:hover { background:#198754; color:#fff; }
+            .option-group .btn { margin-right: .5rem; margin-bottom:.5rem; }
+            .topping-row { border-bottom: 1px dashed #eaeaea; padding: .5rem 0; }
+            .qty-control { display:flex; align-items:center; }
+            .qty-control button { width:36px; height:36px; }
+            .qty-control input { width:64px; text-align:center; margin: 0 .5rem; }
+            .price { color:#198754; font-size:1.25rem; font-weight:600; }
+            .add-bar { position: sticky; bottom: 0; background:#fff; border-top:1px solid #eee; padding:.75rem; }
+            .breadcrumb a { text-decoration:none; color:#198754; }
+            .sku { color:#6c757d; font-size:.9rem; }
+            .old-price { text-decoration: line-through; color:#6c757d; font-size:.95rem; }
+            .discount-badge { background:#dc3545; color:#fff; font-weight:600; border-radius:.25rem; padding:.25rem .5rem; }
+        </style>
+    </th:block>
+</head>
+<body>
+<th:block th:fragment="content">
+    <!-- Fallback inline CSS if layout doesn't include additionalCss -->
+    <style id="pd-inline-style">
+        .btn-option { border: 1px solid #198754; color: #198754; }
+        .btn-option.active, .btn-option:hover { background:#198754; color:#fff; }
+        .option-group .btn { margin-right: .5rem; margin-bottom:.5rem; }
+        .topping-row { border-bottom: 1px dashed #eaeaea; padding: .5rem 0; }
+        .qty-control { display:flex; align-items:center; }
+        .qty-control button { width:36px; height:36px; }
+        .qty-control input { width:64px; text-align:center; margin: 0 .5rem; }
+        .price { color:#198754; font-size:1.25rem; font-weight:600; }
+        .add-bar { position: sticky; bottom: 0; background:#fff; border-top:1px solid #eee; padding:.75rem; }
+        .breadcrumb a { text-decoration:none; color:#198754; }
+        .sku { color:#6c757d; font-size:.9rem; }
+        .old-price { text-decoration: line-through; color:#6c757d; font-size:.95rem; }
+        .discount-badge { background:#dc3545; color:#fff; font-weight:600; border-radius:.25rem; padding:.25rem .5rem; }
+    </style>
+
+    <nav aria-label="breadcrumb" class="container mt-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/products}">Sản phẩm</a></li>
+            <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}">Tên</li>
+        </ol>
+    </nav>
+
+    <div class="container my-3">
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card shadow-sm">
+                    <img th:src="${product.imageUrl != null && !#strings.isEmpty(product.imageUrl) ? product.imageUrl : '/images/placeholder.png'}" class="card-img-top" th:alt="${product.name}" style="object-fit:cover; max-height: 420px;" />
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <form th:action="@{'/products/' + ${product.id} + '/add-to-cart'}" method="post" id="addToCartForm">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h3 class="mb-1" th:text="${product.name}">Tên sản phẩm</h3>
+                        <div class="sku">SKU: <span th:text="${product.id}">#</span></div>
+                    </div>
+
+                    <!-- Discount badge if exists -->
+                    <div class="mt-1" th:if="${discountPercent != null and discountPercent > 0}">
+                        <span class="discount-badge" th:text="${'-' + discountPercent + '%'}">-10%</span>
+                        <span class="ms-2 text-muted small">Đã áp dụng khuyến mãi</span>
+                    </div>
+
+                    <!-- Price display (uses JS to update on variant/topping changes) -->
+                    <div class="mt-2">
+                        <div class="d-flex align-items-baseline gap-3">
+                            <div id="priceText" class="price"
+                                 th:text="${#numbers.formatDecimal(discountedPrice,0,'COMMA',0,'POINT')} + ' ₫'">0 ₫</div>
+                            <div id="oldPriceText" class="old-price"
+                                 th:classappend="${discountPercent == null or discountPercent <= 0} ? ' d-none' : ''"
+                                 th:text="${#numbers.formatDecimal(basePrice,0,'COMMA',0,'POINT')} + ' ₫'">0 ₫</div>
+                        </div>
+                        <div class="small text-muted" id="savingText"
+                             th:if="${discountPercent != null and discountPercent > 0}"
+                             th:text="${'Tiết kiệm ' + #numbers.formatDecimal((basePrice ?: 0) - (discountedPrice ?: 0), 0, 'COMMA', 0, 'POINT') + ' ₫ mỗi ly (' + (discountPercent ?: 0) + '%)'}"></div>
+                    </div>
+
+                    <!-- Sizes (variants) -->
+                    <div class="mt-3">
+                        <div class="fw-semibold mb-2">Kích cỡ</div>
+                        <div class="option-group" id="variantGroup">
+                            <div class="btn-group" role="group" aria-label="Chọn size">
+                                <th:block th:with="minPrice=${#lists.isEmpty(variants)? 0 : variants.get(0).price}">
+                                    <label th:each="v,stat : ${variants}" class="btn btn-option" th:classappend="${stat.index==0}? 'active' : ''">
+                                        <input type="radio" class="btn-check" name="variantId" th:value="${v.id}" th:checked="${stat.index==0}" autocomplete="off">
+                                        <span th:text="${v.size.name}">M</span>
+                                        <small class="text-muted ms-1" th:if="${v.price != minPrice}" th:text="'+' + ${#numbers.formatDecimal(v.price - minPrice,0,'COMMA',0,'POINT')} + ' ₫'"></small>
+                                        <span class="d-none variant-price" th:text="${v.price}"></span>
+                                    </label>
+                                </th:block>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options: Sugar and Ice only -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-2">Độ ngọt</div>
+                            <div class="option-group" data-option="sugar">
+                                <label class="btn btn-option"><input class="btn-check" type="radio" name="sugar" value="Ít" autocomplete="off">Ít</label>
+                                <label class="btn btn-option active"><input class="btn-check" type="radio" name="sugar" value="Bình thường" checked autocomplete="off">Bình thường</label>
+                                <label class="btn btn-option"><input class="btn-check" type="radio" name="sugar" value="Nhiều" autocomplete="off">Nhiều</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fw-semibold mb-2">Độ đá</div>
+                            <div class="option-group" data-option="ice">
+                                <label class="btn btn-option"><input class="btn-check" type="radio" name="ice" value="Ít" autocomplete="off">Ít</label>
+                                <label class="btn btn-option active"><input class="btn-check" type="radio" name="ice" value="Bình thường" checked autocomplete="off">Bình thường</label>
+                                <label class="btn btn-option"><input class="btn-check" type="radio" name="ice" value="Nhiều" autocomplete="off">Nhiều</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="mt-3">
+                        <div class="fw-semibold mb-2">Số lượng</div>
+                        <div class="qty-control">
+                            <button class="btn btn-outline-success" type="button" id="qtyMinus">-</button>
+                            <input type="number" class="form-control" id="qty" name="qty" min="1" value="1">
+                            <button class="btn btn-outline-success" type="button" id="qtyPlus">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Toppings -->
+                    <div class="mt-4">
+                        <div class="fw-semibold mb-2">Topping</div>
+                        <div class="list-group">
+                            <div class="d-flex justify-content-between align-items-center topping-row" th:each="t : ${toppings}">
+                                <div>
+                                    <div class="fw-semibold" th:text="${t.name}">Topping</div>
+                                    <div class="text-muted small" th:text="${#numbers.formatDecimal(t.extraPrice,0,'COMMA',0,'POINT')} + ' ₫'">5.000 ₫</div>
+                                    <span class="d-none topping-price" th:text="${t.extraPrice}"></span>
+                                </div>
+                                <div class="qty-control">
+                                    <button class="btn btn-outline-success btn-sm btn-top-minus" type="button">-</button>
+                                    <input class="form-control form-control-sm top-qty" style="width:56px" type="number" min="0" value="0"
+                                           th:name="${'toppings[' + t.id + ']'}">
+                                    <button class="btn btn-outline-success btn-sm btn-top-plus" type="button">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="add-bar mt-4 d-flex align-items-center justify-content-between">
+                        <div class="fs-5">Tổng: <strong id="totalText"
+                                th:text="${#numbers.formatDecimal(discountedPrice,0,'COMMA',0,'POINT')} + ' ₫'">0 ₫</strong></div>
+                        <button class="btn btn-success btn-lg" type="submit">Thêm vào giỏ hàng</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fallback inline JS if layout doesn't include additionalJs -->
+    <script id="pd-inline-script" th:inline="javascript">
+        (function(){
+            const discountPercent = /*[[${discountPercent}]]*/ 0; // null -> 0
+            function parseVND(s){ return Number(s || 0); }
+            function formatVND(n){ try { return new Intl.NumberFormat('vi-VN').format(n) + ' ₫'; } catch(e){ return n + ' ₫'; } }
+            function currentVariantPrice(){
+                var checked = document.querySelector('input[name="variantId"]:checked');
+                if(!checked){ return 0; }
+                var label = checked.closest('label');
+                var pEl = label ? label.querySelector('.variant-price') : null;
+                var p = pEl ? pEl.textContent : '0';
+                var base = parseVND(p);
+                if (discountPercent && discountPercent > 0) {
+                    const factor = (100 - Math.min(100, discountPercent)) / 100.0;
+                    return Math.round(base * factor);
+                }
+                return base;
+            }
+            function currentVariantBasePrice(){
+                var checked = document.querySelector('input[name="variantId"]:checked');
+                if(!checked){ return 0; }
+                var label = checked.closest('label');
+                var pEl = label ? label.querySelector('.variant-price') : null;
+                var p = pEl ? pEl.textContent : '0';
+                return parseVND(p);
+            }
+            function toppingTotalPerDrink(){
+                var sum = 0;
+                document.querySelectorAll('.topping-row').forEach(function(row){
+                    var priceEl = row.querySelector('.topping-price');
+                    var price = parseVND(priceEl ? priceEl.textContent : '0');
+                    var qtyEl = row.querySelector('.top-qty');
+                    var qty = Number(qtyEl ? qtyEl.value : 0);
+                    sum += price * qty;
+                });
+                return sum;
+            }
+            function recalc(){
+                var baseDisc = currentVariantPrice();
+                var baseRaw = currentVariantBasePrice();
+                var topsPer = toppingTotalPerDrink();
+                var qty = Number((document.getElementById('qty')||{}).value || 1);
+                var line = (baseDisc + topsPer) * qty;
+                var pt = document.getElementById('priceText'); if (pt) pt.textContent = formatVND(baseDisc);
+                var tt = document.getElementById('totalText'); if (tt) tt.textContent = formatVND(line);
+
+                var oldEl = document.getElementById('oldPriceText');
+                var savingEl = document.getElementById('savingText');
+                if (discountPercent && discountPercent > 0) {
+                    if (oldEl) { oldEl.classList.remove('d-none'); oldEl.textContent = formatVND(baseRaw); }
+                    if (savingEl) {
+                        const saving = baseRaw - baseDisc;
+                        savingEl.style.display = 'block';
+                        savingEl.textContent = 'Tiết kiệm ' + formatVND(saving) + ' mỗi ly (' + discountPercent + '%)';
+                    }
+                } else {
+                    if (oldEl) { oldEl.classList.add('d-none'); }
+                    if (savingEl) { savingEl.style.display = 'none'; }
+                }
+            }
+            document.addEventListener('change', function(e){
+                if(e.target.matches('input[name="variantId"], .top-qty, #qty')) recalc();
+            });
+            document.addEventListener('click', function(e){
+                if(e.target && e.target.id==='qtyMinus'){ var i=document.getElementById('qty'); if(i){ i.value=Math.max(1, (Number(i.value||1)-1)); recalc(); } }
+                if(e.target && e.target.id==='qtyPlus'){ var j=document.getElementById('qty'); if(j){ j.value=Number(j.value||1)+1; recalc(); } }
+                if(e.target && e.target.classList && e.target.classList.contains('btn-top-minus')){ var m=e.target.parentElement.querySelector('.top-qty'); if(m){ m.value=Math.max(0, (Number(m.value||0)-1)); recalc(); } }
+                if(e.target && e.target.classList && e.target.classList.contains('btn-top-plus')){ var p=e.target.parentElement.querySelector('.top-qty'); if(p){ p.value=Number(p.value||0)+1; recalc(); } }
+                var clickedLabel = e.target.closest('.option-group label.btn');
+                if(clickedLabel){
+                    var group = clickedLabel.closest('.option-group');
+                    if (group) group.querySelectorAll('label.btn').forEach(function(b){ b.classList.remove('active'); });
+                    clickedLabel.classList.add('active');
+                    var input = clickedLabel.querySelector('input[type="radio"]');
+                    if(input){ input.checked = true; }
+                    recalc();
+                }
+            });
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', recalc);
+            } else { recalc(); }
+        })();
+    </script>
+</th:block>
+
+<th:block th:fragment="additionalJs">
+    <script>
+        // No-op: all logic is in inline script above for access to Thymeleaf variables
+    </script>
+</th:block>
+</body>
+</html>

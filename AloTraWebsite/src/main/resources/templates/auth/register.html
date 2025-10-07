@@ -21,51 +21,40 @@
                     <h3 class="fw-light my-4">Đăng Ký</h3>
                 </div>
                 <div class="card-body">
-                    <form th:action="@{/register}" th:object="${khachHang}" method="post">
+                    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+                    <form th:action="@{/register}" method="post">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
-                        <!-- Validation summary inside th:object context -->
-                        <div th:if="${#fields.hasErrors()}" class="alert alert-danger" role="alert">
-                            <div th:each="err : ${#fields.errors('*')}" th:text="${err}"></div>
-                        </div>
-
                         <div class="row g-3">
-                            <!-- Username -->
                             <div class="col-12">
                                 <div class="form-floating">
-                                    <input type="text" class="form-control" id="username" th:field="*{username}" placeholder="Tên đăng nhập" required />
+                                    <input type="text" class="form-control" id="username" name="username" placeholder="Tên đăng nhập" required th:value="${registerForm != null ? registerForm.username : ''}" />
                                     <label for="username">Tên đăng nhập</label>
                                 </div>
                             </div>
-                            <!-- Full name -->
                             <div class="col-12">
                                 <div class="form-floating">
-                                    <input type="text" class="form-control" id="fullName" th:field="*{fullName}" placeholder="Họ tên" required />
+                                    <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Họ tên" required th:value="${registerForm != null ? registerForm.fullName : ''}" />
                                     <label for="fullName">Họ tên</label>
                                 </div>
                             </div>
-                            <!-- Email -->
                             <div class="col-12">
                                 <div class="form-floating">
-                                    <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="Email" required />
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="Email" required th:value="${registerForm != null ? registerForm.email : ''}" />
                                     <label for="email">Email</label>
                                 </div>
                             </div>
-                            <!-- Phone -->
                             <div class="col-12">
                                 <div class="form-floating">
-                                    <input type="text" class="form-control" id="phone" th:field="*{phone}" placeholder="Số điện thoại" required />
+                                    <input type="text" class="form-control" id="phone" name="phone" placeholder="Số điện thoại" required th:value="${registerForm != null ? registerForm.phone : ''}" />
                                     <label for="phone">Số điện thoại</label>
                                 </div>
                             </div>
-                            <!-- Password (bound to entity field) -->
                             <div class="col-12">
                                 <div class="form-floating">
-                                    <input type="password" class="form-control" id="passwordHash" th:field="*{passwordHash}" placeholder="Mật khẩu" required />
-                                    <label for="passwordHash">Mật khẩu</label>
+                                    <input type="password" class="form-control" id="password" name="password" placeholder="Mật khẩu" required />
+                                    <label for="password">Mật khẩu</label>
                                 </div>
                             </div>
-                            <!-- Confirm Password (not bound) -->
                             <div class="col-12">
                                 <div class="form-floating">
                                     <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu" required />
@@ -76,8 +65,9 @@
 
                         <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
                             <a class="small text-success" th:href="@{/login}">Đã có tài khoản? Đăng nhập</a>
-                            <button type="submit" class="btn btn-alotra">Đăng Ký</button>
+                            <button type="submit" class="btn btn-alotra">Tiếp tục</button>
                         </div>
+                        <div class="form-text mt-2">Bằng việc bấm Tiếp tục, một mã OTP sẽ gửi đến email của bạn để xác nhận đăng ký.</div>
                     </form>
                 </div>
             </div>

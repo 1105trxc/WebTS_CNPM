@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(pageTitle='Quản lý Sản phẩm', pageContent=~{::pageContent})}">
+
+<body>
+<div class="page-content" th:fragment="pageContent">
+    <div th:if="${message}" class="alert alert-success" role="alert" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Danh sách Sản phẩm</h5>
+            <div class="d-flex gap-2">
+                <a th:href="@{/admin/trash}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-trash-alt me-1"></i> Thùng rác
+                </a>
+                <a th:href="@{/admin/products/add}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i> Thêm mới
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped table-hover align-middle">
+                <thead>
+                <tr>
+                    <th>Ảnh</th>
+                    <th>Tên</th>
+                    <th>Danh mục</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${items}">
+                    <td>
+                        <img th:src="${p.imageUrl != null ? p.imageUrl : '/images/placeholder.png'}" alt="Ảnh" style="height:40px;width:40px;object-fit:cover;border-radius:6px;"/>
+                    </td>
+                    <td th:text="${p.name}"></td>
+                    <td th:text="${p.category != null ? p.category.name : '—'}"></td>
+                    <td>
+                        <span class="badge" th:text="${p.status == 1 ? 'Đang bán' : 'Ngừng bán'}"
+                              th:classappend="${p.status == 1 ? 'bg-success' : 'bg-secondary'}"></span>
+                    </td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-secondary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#variantsModal" th:attr="data-product-id=${p.id}">
+                            Biến thể
+                        </button>
+                        <a th:href="@{/admin/products/edit/{id}(id=${p.id})}" class="btn btn-info btn-sm">Sửa</a>
+                        <a th:href="@{/admin/products/delete/{id}(id=${p.id})}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn chắc chắn muốn xóa?')">Xóa</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(items)}">
+                    <td colspan="5" class="text-center">Chưa có sản phẩm nào.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Variants Modal -->
+    <div class="modal fade" id="variantsModal" tabindex="-1" aria-labelledby="variantsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="variantsModalLabel">Biến thể sản phẩm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="variantsAlert" class="alert d-none" role="alert"></div>
+                    <table class="table table-sm align-middle">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Size</th>
+                            <th>Giá</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                        </thead>
+                        <tbody id="variantsBody">
+                        <tr><td colspan="4" class="text-center text-muted">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const variantsModal = document.getElementById('variantsModal');
+        const variantsBody = document.getElementById('variantsBody');
+        const variantsAlert = document.getElementById('variantsAlert');
+        // Context path and base URL via Thymeleaf (works with server.servlet.context-path)
+        const ctx = /*[[@{/}]]*/ '';
+        let variantsBase = (ctx ? ctx.replace(/\/$/, '') : '') + '/admin/products/';
+        // Fallback: compute from current path if Thymeleaf inline is not applied
+        if (!ctx) {
+            const path = window.location.pathname; // e.g. /alotra-website/admin/products
+            const i = path.indexOf('/admin/products');
+            const prefix = i >= 0 ? path.substring(0, i) : '';
+            variantsBase = prefix + '/admin/products/';
+        }
+
+        function formatPrice(n) {
+            try {
+                const val = typeof n === 'number' ? n : parseFloat(n);
+                return (isNaN(val) ? 0 : val).toLocaleString('vi-VN') + ' ₫';
+            } catch { return n; }
+        }
+
+        variantsModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const productId = button?.getAttribute('data-product-id');
+            variantsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Đang tải...</td></tr>';
+            variantsAlert.classList.add('d-none');
+            fetch(variantsBase + productId + '/variants/json', { headers: { 'Accept': 'application/json' }})
+                .then(resp => {
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    return resp.json();
+                })
+                .then(rows => {
+                    if (!rows || rows.length === 0) {
+                        variantsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Chưa có biến thể.</td></tr>';
+                        return;
+                    }
+                    variantsBody.innerHTML = rows.map((v, idx) => `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td>${v.size ?? '—'}</td>
+                            <td>${formatPrice(v.price)}</td>
+                            <td><span class="badge ${v.status == 1 ? 'bg-success' : 'bg-secondary'}">${v.status == 1 ? 'Đang bán' : 'Ngừng bán'}</span></td>
+                        </tr>
+                    `).join('');
+                })
+                .catch(err => {
+                    variantsBody.innerHTML = '';
+                    variantsAlert.className = 'alert alert-danger';
+                    variantsAlert.textContent = 'Không tải được biến thể: ' + err.message;
+                });
+        });
+    </script>
+</div>
+</body>
+</html>

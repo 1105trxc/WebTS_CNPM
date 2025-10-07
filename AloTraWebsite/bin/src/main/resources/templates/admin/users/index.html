@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(pageTitle='Người dùng', pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent">
+    <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="d-flex justify-content-end mb-2">
+        <a th:href="@{/admin/trash}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-trash-alt me-1"></i> Thùng rác
+        </a>
+    </div>
+
+    <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tab}=='customers'?'active':''" th:href="@{/admin/users(tab='customers')}">Khách hàng</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${tab}=='employees'?'active':''" th:href="@{/admin/users(tab='employees')}">Nhân viên</a>
+        </li>
+    </ul>
+
+    <!-- Customers table -->
+    <div th:if="${tab}=='customers'" class="card">
+        <div class="card-body">
+            <form class="row g-2 mb-3" method="get" th:action="@{/admin/users}">
+                <input type="hidden" name="tab" value="customers" />
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="kwC" placeholder="Tìm theo tài khoản, họ tên, email, SĐT" th:value="${kwC}">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="statusC">
+                        <option value="" th:selected="${statusC == null}">Tất cả trạng thái</option>
+                        <option th:value="1" th:selected="${statusC == 1}">Hoạt động</option>
+                        <option th:value="0" th:selected="${statusC == 0}">Khóa</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary w-100" type="submit">Lọc</button>
+                </div>
+            </form>
+
+            <h5 class="mb-3">Danh sách khách hàng</h5>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                    <tr><th>#</th><th>Tài khoản</th><th>Họ tên</th><th>Email</th><th>Điện thoại</th><th>Trạng thái</th><th class="text-end">Hành động</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="c : ${customers}">
+                        <td th:text="${c.id}"></td>
+                        <td th:text="${c.username}"></td>
+                        <td th:text="${c.fullName}"></td>
+                        <td th:text="${c.email}"></td>
+                        <td th:text="${c.phone}"></td>
+                        <td>
+                            <span class="badge" th:text="${c.status==1?'Hoạt động':'Khóa'}" th:classappend="${c.status==1?'bg-success':'bg-secondary'}"></span>
+                        </td>
+                        <td class="text-end">
+                            <a th:href="@{'/admin/users/customers/' + ${c.id}}" class="btn btn-sm btn-outline-secondary">Xem</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(customers)}"><td colspan="7" class="text-center">Chưa có khách hàng</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employees table -->
+    <div th:if="${tab}=='employees'" class="card">
+        <div class="card-body">
+            <form class="row g-2 mb-3" method="get" th:action="@{/admin/users}">
+                <input type="hidden" name="tab" value="employees" />
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="kwE" placeholder="Tìm theo tài khoản, họ tên, email, SĐT" th:value="${kwE}">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="roleE">
+                        <option value="" th:selected="${roleE == null}">Tất cả vai trò</option>
+                        <option th:value="1" th:selected="${roleE == 1}">Chủ cửa hàng</option>
+                        <option th:value="2" th:selected="${roleE == 2}">Nhân viên</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="statusE">
+                        <option value="" th:selected="${statusE == null}">Tất cả trạng thái</option>
+                        <option th:value="1" th:selected="${statusE == 1}">Hoạt động</option>
+                        <option th:value="0" th:selected="${statusE == 0}">Khóa</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-primary w-100" type="submit">Lọc</button>
+                </div>
+            </form>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Danh sách Nhân viên</h5>
+                <a th:href="@{/admin/users/employees/new}" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm nhân viên</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                    <tr><th>#</th><th>Tài khoản</th><th>Họ tên</th><th>Email</th><th>Điện thoại</th><th>Vai trò</th><th>Trạng thái</th><th class="text-end">Hành động</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="e : ${employees}">
+                        <td th:text="${e.id}"></td>
+                        <td th:text="${e.username}"></td>
+                        <td th:text="${e.fullName}"></td>
+                        <td th:text="${e.email}"></td>
+                        <td th:text="${e.phone}"></td>
+                        <td th:text="${e.role==1?'Chủ cửa hàng':'Nhân viên'}"></td>
+                        <td>
+                            <span class="badge" th:text="${e.status==1?'Hoạt động':'Khóa'}" th:classappend="${e.status==1?'bg-success':'bg-secondary'}"></span>
+                        </td>
+                        <td class="text-end d-flex gap-1 justify-content-end">
+                            <a th:href="@{'/admin/users/employees/edit/' + ${e.id}}" class="btn btn-sm btn-outline-primary">Sửa</a>
+                            <form th:action="@{'/admin/users/employees/' + ${e.id} + '/reset-password'}" method="post" th:object="${e}" onsubmit="return confirm('Đặt lại mật khẩu cho nhân viên này?');">
+                                <button type="submit" class="btn btn-sm btn-outline-warning">Đặt lại MK</button>
+                            </form>
+                            <a th:href="@{'/admin/users/employees/delete/' + ${e.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa nhân viên này?')">Xóa</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(employees)}"><td colspan="8" class="text-center">Chưa có nhân viên</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

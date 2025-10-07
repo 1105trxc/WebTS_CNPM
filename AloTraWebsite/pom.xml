@@ -96,6 +96,7 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
+		<!-- Removed: com.sgraph:sgraph-website:1.1.0 (not available on Maven Central) -->
 	</dependencies>
 
 	<build>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(pageTitle='Sự kiện khuyến mãi', pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Danh sách sự kiện</h5>
+        <a th:href="@{/admin/promotions/new}" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm</a>
+    </div>
+
+    <table class="table table-striped table-hover align-middle">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Tên sự kiện</th>
+            <th>Ngày</th>
+            <th>Trạng thái</th>
+            <th class="text-end">Hành động</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${items}">
+            <td th:text="${p.id}"></td>
+            <td>
+                <strong th:text="${p.name}"></strong>
+                <div class="small text-muted" th:text="${p.description}"></div>
+            </td>
+            <td th:text="${#temporals.format(p.startDate, 'dd/MM/yyyy')} + ' - ' + ${#temporals.format(p.endDate, 'dd/MM/yyyy')}"></td>
+            <td>
+                <span class="badge" th:text="${p.status==1?'Hoạt động':'Ngừng'}"
+                      th:classappend="${p.status==1?'bg-success':'bg-secondary'}"></span>
+            </td>
+            <td class="text-end">
+                <a th:href="@{'/admin/promotions/' + ${p.id} + '/products'}" class="btn btn-sm btn-outline-secondary">Áp sản phẩm</a>
+                <a th:href="@{'/admin/promotions/edit/' + ${p.id}}" class="btn btn-sm btn-outline-primary">Sửa</a>
+                <a th:href="@{'/admin/promotions/delete/' + ${p.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa sự kiện này?')">Xóa</a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(items)}">
+            <td colspan="5" class="text-center">Chưa có sự kiện nào.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

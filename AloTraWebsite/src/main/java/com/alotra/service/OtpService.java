@@ -104,4 +104,17 @@ public class OtpService {
         sendRegisterOtp(kh);
         return true;
     }
+
+    // --- New helpers for pre-account OTP (session-based) ---
+    public String generateOtp() {
+        return generateNumericCode(6);
+    }
+
+    public void sendOtpEmail(String to, String otp) {
+        String body = "Xin chào,\n\n" +
+                "Mã xác thực (OTP) của bạn là: " + otp + "\n" +
+                "Mã sẽ hết hạn sau 10 phút.\n\n" +
+                "Trân trọng,\nAloTra";
+        sendMail(to, "AloTra - Mã OTP xác nhận đăng ký", body);
+    }
 }

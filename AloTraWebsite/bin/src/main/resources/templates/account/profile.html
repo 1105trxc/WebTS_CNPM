@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/account-layout :: layout(pageTitle='Thông Tin Tài Khoản', pageContent=~{::pageContent})}">
+<head>
+    <title>Thông Tin Tài Khoản</title>
+</head>
+<body>
+<div class="page-content" th:fragment="pageContent" th:with="currentPage='account-profile'">
+    <h2 class="mb-4">Tài khoản của tôi</h2>
+    <div class="row">
+        <!-- Sidebar nav moved to layout -->
+        <!-- Content area -->
+        <div class="col-md-12 col-lg-10 col-xl-9">
+            <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Thông tin cá nhân</h5>
+                    <form th:action="@{/account/profile}" th:object="${form}" method="post" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Họ tên</label>
+                            <input class="form-control" th:field="*{fullName}" required />
+                            <div class="text-danger small" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" th:field="*{email}" required />
+                            <div class="text-danger small" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Số điện thoại</label>
+                            <input class="form-control" th:field="*{phone}" />
+                            <div class="text-danger small" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+                        </div>
+                        <div class="col-md-12"><hr /></div>
+                        <div class="col-md-6">
+                            <label class="form-label">Mật khẩu mới (nếu muốn đổi)</label>
+                            <input type="password" class="form-control" th:field="*{newPassword}" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Xác nhận mật khẩu</label>
+                            <input type="password" class="form-control" th:field="*{confirmPassword}" />
+                            <div class="text-danger small" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+                        </div>
+                        <div class="col-12 d-flex gap-2">
+                            <button class="btn btn-success" type="submit">Lưu thay đổi</button>
+                        </div>
+                    </form>
+                    <div class="mt-4 small text-muted">
+                        <div><strong>Tài khoản:</strong> <span th:text="${kh.username}"></span></div>
+                        <div><strong>Trạng thái:</strong>
+                            <span class="badge" th:text="${kh.status==1?'Hoạt động':'Khóa'}"
+                                  th:classappend="${kh.status==1?'bg-success':'bg-secondary'}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
