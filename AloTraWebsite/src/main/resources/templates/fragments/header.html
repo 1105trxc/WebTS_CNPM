@@ -10,20 +10,29 @@
             </a>
 
             <!-- Search bar -->
-            <form class="d-flex mx-auto search-bar" role="search">
-                <input class="form-control me-2" type="search" placeholder="Bạn muốn mua gì..." aria-label="Search">
+            <form id="siteSearchForm" class="d-flex mx-auto search-bar position-relative" role="search" th:action="@{/search}" method="get">
+                <input id="siteSearchInput" name="q" class="form-control me-2" type="search" placeholder="Bạn muốn mua gì..." aria-label="Search" autocomplete="off">
                 <button class="btn btn-outline-success" type="submit">
                     <i class="fas fa-search"></i>
                 </button>
+                <div id="siteSearchSuggest" class="position-absolute bg-white shadow rounded w-100" style="display:none; top:100%; left:0; z-index:1030; max-height: 360px; overflow:auto;"></div>
             </form>
 
             <!-- User actions -->
             <ul class="navbar-nav user-actions ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-motorcycle"></i> Chọn Phương Thức Nhận Hàng</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-envelope"></i></a>
+                <!-- Notifications: hover to open -->
+                <li class="nav-item position-relative" id="notifArea" sec:authorize="isAuthenticated()">
+                    <a class="nav-link d-flex align-items-center" href="#" id="notifLink">
+                        <i class="fas fa-envelope"></i>
+                        <span id="notif-count-badge" class="badge bg-danger ms-2" style="min-width:20px; display:none;">0</span>
+                    </a>
+                    <div id="notifDropdown" class="shadow rounded bg-white position-absolute" style="display:none; right:0; top:100%; width:320px; z-index:1030;">
+                        <div class="p-2 border-bottom fw-semibold">Thông báo</div>
+                        <div id="notifList" class="list-group list-group-flush small" style="max-height: 360px; overflow:auto;">
+                            <div class="p-3 text-center text-muted">Đang tải...</div>
+                        </div>
+                        <div class="p-2 border-top text-end"><a class="small" th:href="@{/account/orders}">Xem đơn hàng</a></div>
+                    </div>
                 </li>
                 <li class="nav-item">
                     <a id="cartLink" class="nav-link d-flex align-items-center" th:href="@{/cart}">

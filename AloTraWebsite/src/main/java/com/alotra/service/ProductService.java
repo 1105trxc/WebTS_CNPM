@@ -61,6 +61,28 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    // New: search by keyword (product or category name)
+    public List<ProductDTO> search(String keyword) {
+        if (keyword == null) keyword = "";
+        String kw = keyword.trim();
+        return productRepository.searchByKeywordNative(kw).stream()
+                .map(row -> {
+                    BigDecimal minBase = row.getPrice();
+                    Integer percent = row.getId() != null ? promoRepo.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    BigDecimal finalPrice = applyPercent(minBase, percent);
+                    ProductDTO dto = new ProductDTO(
+                            row.getId(),
+                            row.getName(),
+                            (row.getImageUrl() != null && !row.getImageUrl().isBlank()) ? row.getImageUrl() : "/images/placeholder.png",
+                            finalPrice
+                    );
+                    dto.setOriginalPrice(minBase);
+                    dto.setDiscountPercent(percent);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
     private BigDecimal applyPercent(BigDecimal base, Integer percent) {
         if (base == null) return null;
         if (percent == null || percent <= 0) return base;

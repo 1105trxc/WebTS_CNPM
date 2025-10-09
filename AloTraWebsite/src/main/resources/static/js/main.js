@@ -131,6 +131,72 @@ $(document).ready(function() {
     }
 
     // ===================================================================
+    // SEARCH TYPEAHEAD
+    // ===================================================================
+    const $searchInput = $('#siteSearchInput');
+    const $searchForm = $('#siteSearchForm');
+    const $suggest = $('#siteSearchSuggest');
+    let searchTimer = null;
+    let lastQuery = '';
+
+    function hideSuggest(){ $suggest.hide().empty(); }
+
+    function renderSuggest(data){
+        const products = data && Array.isArray(data.products) ? data.products : [];
+        const categories = data && Array.isArray(data.categories) ? data.categories : [];
+        const keywords = data && Array.isArray(data.keywords) ? data.keywords : [];
+        let html = '';
+        if (keywords.length) {
+            html += '<div class="p-2 border-bottom"><div class="small text-muted mb-1">Gợi ý nhanh</div>';
+            html += keywords.map(k => `<a class="btn btn-sm btn-outline-success me-1 mb-1 search-chip" href="${api('search?q=' + encodeURIComponent(k))}">${k}</a>`).join('');
+            html += '</div>';
+        }
+        if (categories.length) {
+            html += '<div class="p-2 border-bottom"><div class="small text-muted mb-1">Danh mục</div>';
+            html += categories.map(c => `<a class="list-group-item list-group-item-action" href="${api('products?categoryId=' + encodeURIComponent(c.id))}"><i class="fa fa-folder-open me-2 text-success"></i>${c.name||''}</a>`).join('');
+            html += '</div>';
+        }
+        if (products.length) {
+            html += '<div class="list-group list-group-flush">';
+            html += products.map(p => `
+                <a class="list-group-item list-group-item-action d-flex align-items-center" href="${api('products/' + p.id)}">
+                    <img src="${p.imageUrl || '/images/placeholder.png'}" alt="thumb" style="width:42px;height:42px;object-fit:cover;border-radius:6px;" class="me-2" />
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${p.name||''}</div>
+                        <div class="small text-success">${(p.price||0).toLocaleString('vi-VN')} ₫</div>
+                    </div>
+                </a>`).join('');
+            html += '</div>';
+        }
+        if (!html) {
+            html = '<div class="p-3 text-center text-muted">Không có gợi ý.</div>';
+        }
+        $suggest.html(html).show();
+    }
+
+    function fetchSuggest(q){
+        $.ajax({ url: api('api/search/suggest'), data: { q: q||'' }, success: renderSuggest, error: function(){ hideSuggest(); } });
+    }
+
+    if ($searchInput.length && $suggest.length) {
+        $searchInput.on('input', function(){
+            const q = $(this).val() || '';
+            if (q === lastQuery && $suggest.is(':visible')) return;
+            lastQuery = q;
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function(){ fetchSuggest(q); }, 200);
+        });
+        $searchInput.on('focus', function(){
+            if (lastQuery === '' && !$suggest.is(':visible')) { fetchSuggest(''); } else { $suggest.show(); }
+        });
+        $(document).on('click', function(e){ if (!$(e.target).closest('#siteSearchForm').length) hideSuggest(); });
+        // basic keyboard: enter submits form
+        $searchInput.on('keydown', function(e){ if (e.key === 'Escape') { hideSuggest(); } });
+        // Submit form navigates to /search?q=...
+        $searchForm.on('submit', function(){ hideSuggest(); });
+    }
+
+    // ===================================================================
     // MEGA MENU: mobile/touch toggle
     // ===================================================================
     const $megaItem = $('.has-mega');
@@ -151,4 +217,80 @@ $(document).ready(function() {
         }
     });
     $(document).on('keydown', function(e){ if (e.key === 'Escape') $('.has-mega').removeClass('open'); });
+
+    // ===================================================================
+    // NOTIFICATIONS: hover dropdown + badge count
+    // ===================================================================
+    const $notifArea = $('#notifArea');
+    const $notifDropdown = $('#notifDropdown');
+    const $notifList = $('#notifList');
+    const $notifBadge = $('#notif-count-badge');
+    let notifLastLoadedAt = 0;
+    let notifHideTimer = null;
+
+    function setNotifCount(n) {
+        const v = Number(n || 0);
+        if (!$notifBadge.length) return;
+        if (v > 0) {
+            $notifBadge.text(v).show();
+        } else {
+            $notifBadge.hide();
+        }
+    }
+
+    function renderNotifications(items) {
+        if (!$notifList.length) return;
+        if (!items || !items.length) {
+            $notifList.html('<div class="p-3 text-center text-muted">Không có thông báo.</div>');
+            return;
+        }
+        const icon = (type) => {
+            switch(type){
+                case 'unpaid': return '<i class="fa fa-triangle-exclamation text-warning me-2"></i>';
+                case 'review': return '<i class="fa fa-star text-warning me-2"></i>';
+                case 'order': return '<i class="fa fa-receipt text-success me-2"></i>';
+                default: return '<i class="fa fa-bell me-2"></i>';
+            }
+        };
+        const html = items.map(it => `
+            <a href="${api((it.url||'').replace(/^\//,''))}" class="list-group-item list-group-item-action d-flex align-items-start">
+                <span class="me-2">${icon(it.type)}</span>
+                <span>${it.text||''}</span>
+            </a>`).join('');
+        $notifList.html(html);
+    }
+
+    function loadNotifications(force) {
+        const now = Date.now();
+        if (!force && (now - notifLastLoadedAt) < 30000) return; // cache 30s
+        $.ajax({
+            url: api('api/notifications'),
+            method: 'GET',
+            success: function(res){
+                setNotifCount(res && typeof res.count !== 'undefined' ? res.count : 0);
+                renderNotifications(res && res.items ? res.items : []);
+                notifLastLoadedAt = now;
+            },
+            statusCode: { 401: function(){ setNotifCount(0); if ($notifList.length) $notifList.html('<div class="p-3 text-center text-muted">Vui lòng đăng nhập để xem thông báo.</div>'); } },
+            error: function(){ /* keep previous */ }
+        });
+    }
+
+    function refreshNotifCount() {
+        $.ajax({ url: api('api/notifications'), method: 'GET', success: function(res){ setNotifCount(res && typeof res.count !== 'undefined' ? res.count : 0); }, statusCode: {401: function(){ setNotifCount(0);} } });
+    }
+
+    if ($notifArea.length) {
+        $notifArea.on('mouseenter', function(){
+            if (notifHideTimer) { clearTimeout(notifHideTimer); notifHideTimer = null; }
+            $notifDropdown.stop(true, true).fadeIn(80);
+            loadNotifications(false);
+        });
+        $notifArea.on('mouseleave', function(){
+            notifHideTimer = setTimeout(function(){ $notifDropdown.stop(true, true).fadeOut(80); }, 120);
+        });
+    }
+    // Periodic count refresh
+    refreshNotifCount();
+    setInterval(refreshNotifCount, 60000);
 });

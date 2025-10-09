@@ -51,4 +51,15 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // New: filter active products by category id
     List<Product> findByCategory_IdAndDeletedAtIsNull(Integer categoryId);
+
+    // New: keyword search by product or category name (case-insensitive)
+    @Query(value = "SELECT TOP 20 sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, MIN(b.GiaBan) AS price " +
+            "FROM SanPham sp " +
+            "LEFT JOIN BienTheSanPham b ON b.MaSP = sp.MaSP " +
+            "LEFT JOIN DanhMucSanPham dm ON dm.MaDM = sp.MaDM " +
+            "WHERE sp.TrangThai = 1 AND sp.DeletedAt IS NULL " +
+            "AND (LOWER(sp.TenSP) LIKE LOWER(CONCAT('%', :kw, '%')) OR LOWER(dm.TenDM) LIKE LOWER(CONCAT('%', :kw, '%'))) " +
+            "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
+            "ORDER BY sp.MaSP DESC", nativeQuery = true)
+    List<BestSellerProjection> searchByKeywordNative(@Param("kw") String keyword);
 }
