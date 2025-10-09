@@ -246,6 +246,8 @@ public class CartService {
             ol.setUnitPrice(ci.getUnitPrice());
             ol.setLineDiscount(BigDecimal.ZERO);
             ol.setLineTotal(ci.getLineTotal());
+            // copy sugar/ice note
+            ol.setNote(ci.getNote());
             ol = orderLineRepo.save(ol);
             // Copy toppings from cart item to order line
             for (GioHangCTTopping ct : cartToppingRepo.findByCartItem(ci)) {
@@ -294,22 +296,37 @@ public class CartService {
         order.setCustomer(kh);
         order.setPaymentMethod(paymentMethod);
         order.setReceivingMethod(receivingMethod);
-        // Merge shipping info into note for now (no dedicated columns)
+        // Build note and set receiver info when Ship
         StringBuilder sb = new StringBuilder();
         if (note != null && !note.isBlank()) sb.append(note.trim());
-        if ("Ship".equalsIgnoreCase(receivingMethod)) {
+        boolean isShip = "Ship".equalsIgnoreCase(receivingMethod);
+        if (isShip) {
+            String recvName = (shipName != null && !shipName.isBlank()) ? shipName.trim() : (kh.getFullName() != null ? kh.getFullName().trim() : null);
+            String recvPhone = (shipPhone != null && !shipPhone.isBlank()) ? shipPhone.trim() : (kh.getPhone() != null ? kh.getPhone().trim() : null);
+            String recvAddr = (shipAddress != null && !shipAddress.isBlank()) ? shipAddress.trim() : null;
+            // Validate minimal required fields for shipping
+            if (recvPhone == null || recvPhone.isBlank() || recvAddr == null || recvAddr.isBlank()) {
+                throw new IllegalArgumentException("Vui lòng nhập đầy đủ SĐT và Địa chỉ khi chọn Ship tận nơi");
+            }
+            order.setReceiverName(recvName);
+            order.setReceiverPhone(recvPhone);
+            order.setShippingAddress(recvAddr);
             if (sb.length() > 0) sb.append(" | ");
             sb.append("Ship to: ");
-            if (shipName != null && !shipName.isBlank()) sb.append(shipName.trim()).append(", ");
-            if (shipPhone != null && !shipPhone.isBlank()) sb.append(shipPhone.trim()).append(", ");
-            if (shipAddress != null && !shipAddress.isBlank()) sb.append(shipAddress.trim());
+            if (recvName != null && !recvName.isBlank()) sb.append(recvName).append(", ");
+            sb.append(recvPhone).append(", ").append(recvAddr);
+        } else {
+            // Pickup at store: clear receiver fields
+            order.setReceiverName(null);
+            order.setReceiverPhone(null);
+            order.setShippingAddress(null);
         }
         if (sb.length() > 0) order.setNote(sb.toString());
         // Compute totals
         BigDecimal tongHang = calcTotal(items);
         order.setTongHang(tongHang);
         order.setGiamGiaDon(BigDecimal.ZERO);
-        // Simple shipping fee rule: 0 for pickup, 0 for ship (placeholder; extend later)
+        // Shipping fee rule: 0 for now
         order.setPhiVanChuyen(BigDecimal.ZERO);
         order.setTongThanhToan(tongHang.add(order.getPhiVanChuyen()).subtract(order.getGiamGiaDon()));
         order = orderRepo.save(order);
@@ -322,6 +339,8 @@ public class CartService {
             ol.setUnitPrice(ci.getUnitPrice());
             ol.setLineDiscount(BigDecimal.ZERO);
             ol.setLineTotal(ci.getLineTotal());
+            // copy sugar/ice note
+            ol.setNote(ci.getNote());
             ol = orderLineRepo.save(ol);
             for (GioHangCTTopping ct : cartToppingRepo.findByCartItem(ci)) {
                 CTDonHangTopping ot = new CTDonHangTopping();

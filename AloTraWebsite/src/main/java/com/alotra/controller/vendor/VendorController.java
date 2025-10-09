@@ -118,12 +118,11 @@ public class VendorController {
         return redirectFrom(id, from);
     }
 
-    // Staff marks cash orders as paid at handover
+    // Staff marks orders as paid (regardless of method)
     @PostMapping("/orders/{id}/mark-cash-paid")
     public String markCashPaid(@PathVariable Integer id, @RequestParam(required = false) String from) {
         donHangRepository.findById(id).ifPresent(dh -> {
-            if ("TienMat".equalsIgnoreCase(String.valueOf(dh.getPaymentMethod()))
-                    && !"DaThanhToan".equals(dh.getPaymentStatus())) {
+            if (!"DaThanhToan".equals(dh.getPaymentStatus())) {
                 dh.setPaymentStatus("DaThanhToan");
                 dh.setPaidAt(LocalDateTime.now());
                 donHangRepository.save(dh);

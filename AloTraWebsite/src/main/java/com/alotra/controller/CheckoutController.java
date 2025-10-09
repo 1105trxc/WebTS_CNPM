@@ -47,6 +47,9 @@ public class CheckoutController {
         model.addAttribute("total", cartService.calcTotal(sel));
         model.addAttribute("paymentMethod", paymentMethod);
         model.addAttribute("itemIds", itemIds);
+        // Prefill receiver info
+        model.addAttribute("defaultShipName", kh.getFullName());
+        model.addAttribute("defaultShipPhone", kh.getPhone());
         return "checkout/confirm";
     }
 

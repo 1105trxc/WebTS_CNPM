@@ -28,6 +28,12 @@
                                 <tr th:each="it : ${items}">
                                     <td>
                                         <div class="fw-semibold" th:text="${it.variant.product.name}">Tên SP</div>
+                                        <!-- Sugar/Ice badges from item note -->
+                                        <div class="mt-1" th:if="${it.note}">
+                                            <span th:each="p : ${it.note != null ? it.note.split(';') : {}}"
+                                                  th:if="${#strings.contains(p,'Đường') or #strings.contains(p,'Đá')}"
+                                                  class="badge bg-light text-dark border me-1" th:text="${#strings.trim(p)}"></span>
+                                        </div>
                                         <div class="small text-muted" th:if="${itemToppingsMap[it.id] != null and !#lists.isEmpty(itemToppingsMap[it.id])}">
                                             <div class="mt-1">Topping:</div>
                                             <ul class="small mb-0">
@@ -97,11 +103,11 @@
                         <div id="shipForm">
                             <div class="mb-2">
                                 <label class="form-label">Họ tên người nhận</label>
-                                <input class="form-control" name="shipName" placeholder="Người nhận">
+                                <input class="form-control" name="shipName" placeholder="Người nhận" th:value="${defaultShipName}">
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Số điện thoại</label>
-                                <input class="form-control" name="shipPhone" placeholder="SĐT liên hệ">
+                                <input class="form-control" name="shipPhone" placeholder="SĐT liên hệ" th:value="${defaultShipPhone}">
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Địa chỉ</label>
@@ -109,7 +115,7 @@
                             </div>
                         </div>
                         <div id="pickupHint" class="small text-muted" style="display:none">
-                            Đến lấy tại: 268 Lý Thường Kiệt, Phường 14, Quận 10, TP.HCM (ví dụ)
+                            Đến lấy tại: Khu phố 6, P. Linh Trung, TP. Thủ Đức, TP. HCM
                         </div>
 
                         <button class="btn btn-success w-100 mt-3" type="submit">Xác nhận đặt hàng</button>
@@ -120,27 +126,7 @@
     </div>
 </th:block>
 
-<th:block th:fragment="scripts">
-    <script>
-        document.addEventListener('DOMContentLoaded', function(){
-            const payBank = document.getElementById('payBank');
-            const bankHint = document.getElementById('bankHint');
-            const recvShip = document.getElementById('recvShip');
-            const shipForm = document.getElementById('shipForm');
-            const pickupHint = document.getElementById('pickupHint');
-
-            function updateUI(){
-                bankHint.style.display = payBank.checked ? 'block' : 'none';
-                const ship = recvShip.checked;
-                shipForm.style.display = ship ? 'block' : 'none';
-                pickupHint.style.display = ship ? 'none' : 'block';
-            }
-            document.querySelectorAll('input[name="paymentMethod"], input[name="receivingMethod"]').forEach(el => {
-                el.addEventListener('change', updateUI);
-            });
-            updateUI();
-        });
-    </script>
-</th:block>
+<!-- Scripts fragment intentionally left empty; JS is loaded globally from layout -->
+<th:block th:fragment="scripts"></th:block>
 </body>
 </html>

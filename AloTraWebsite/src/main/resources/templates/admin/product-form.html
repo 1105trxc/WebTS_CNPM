@@ -54,11 +54,37 @@
                         <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="previewImage(event)" />
                     </div>
                 </div>
+
+                <!-- New: Define variants directly when creating a product -->
+                <div class="card mt-4" th:if="${product.id == null}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Biến thể theo Size</h6>
+                        <button class="btn btn-sm btn-outline-primary" type="button" id="btnAddVariant">Thêm biến thể</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                <tr>
+                                    <th style="width: 35%">Size</th>
+                                    <th style="width: 35%">Giá</th>
+                                    <th style="width: 20%">Trạng thái</th>
+                                    <th class="text-end" style="width: 10%">Xóa</th>
+                                </tr>
+                                </thead>
+                                <tbody id="variantRows">
+                                <!-- Initially empty: user clicks 'Thêm biến thể' to add -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="form-text mt-2">Bạn có thể thêm nhiều size. Nếu để trống sẽ không tạo biến thể.</div>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- Variants (sizes) -->
+    <!-- Variants (sizes) for edit mode -->
     <div class="card mt-4" th:if="${product.id != null}">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Biến thể theo Size</h5>
@@ -116,6 +142,41 @@
                 img.src = URL.createObjectURL(file);
             }
         }
+    </script>
+
+    <!-- Inline JS to manage variant rows at creation time -->
+    <script th:inline="javascript">
+        (function(){
+            const sizes = /*[[${sizes}]]*/ [];
+            function optionHtml(){
+                if (!Array.isArray(sizes) || sizes.length === 0) return '<option value="" disabled>— Không có size —</option>';
+                return sizes.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            }
+            function addRow(){
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <select class="form-select" name="variantSizeId">${optionHtml()}</select>
+                    </td>
+                    <td>
+                        <input class="form-control" name="variantPrice" type="number" step="1000" min="0" placeholder="Giá" />
+                    </td>
+                    <td>
+                        <select class="form-select" name="variantStatus">
+                            <option value="1" selected>Đang bán</option>
+                            <option value="0">Ngừng bán</option>
+                        </select>
+                    </td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">Xóa</button>
+                    </td>`;
+                document.getElementById('variantRows')?.appendChild(tr);
+            }
+            document.addEventListener('click', function(e){
+                if (e.target && e.target.id === 'btnAddVariant') { addRow(); }
+                if (e.target && e.target.classList.contains('btn-remove-row')) { e.target.closest('tr')?.remove(); }
+            });
+        })();
     </script>
 </div>
 </body>

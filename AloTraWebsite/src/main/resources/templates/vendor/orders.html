@@ -88,7 +88,7 @@
                                     </div>
                                     <input type="hidden" name="from" th:value="${from}">
                                 </form>
-                                <form th:if="${o.paymentMethod=='TienMat' && o.paymentStatus!='DaThanhToan'}" th:action="@{'/vendor/orders/' + ${o.id} + '/mark-cash-paid'}" method="post" onsubmit="return confirm('Xác nhận đã thu tiền mặt?');">
+                                <form th:if="${o.paymentStatus!='DaThanhToan'}" th:action="@{'/vendor/orders/' + ${o.id} + '/mark-cash-paid'}" method="post" onsubmit="return confirm('Xác nhận đã thu tiền từ khách?');">
                                     <input type="hidden" name="from" th:value="${from}">
                                     <button class="btn btn-sm btn-success" type="submit">Đã thu tiền</button>
                                 </form>

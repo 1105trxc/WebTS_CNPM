@@ -48,8 +48,8 @@
     <!-- App global JS -->
     <script th:src="@{/js/main.js}"></script>
     <script th:src="@{/js/cart.js}"></script>
-    <!-- Product list interactions (safe no-op on pages without catalog) -->
     <script th:src="@{/js/product-list.js}"></script>
+    <script th:src="@{/js/checkout-confirm.js}"></script>
     <th:block th:if="${order != null}">
     <script th:inline="javascript">
         window.orderId = /*[[${order.id}]]*/ 0;

@@ -55,6 +55,16 @@ public class DonHang {
     @Column(name = "PhuongThucNhanHang")
     private String receivingMethod;
 
+    // New: receiver info fields
+    @Column(name = "DiaChiNhanHang")
+    private String shippingAddress;
+
+    @Column(name = "TenNguoiNhan")
+    private String receiverName;
+
+    @Column(name = "SDTNguoiNhan")
+    private String receiverPhone;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public KhachHang getCustomer() { return customer; }
@@ -85,4 +95,10 @@ public class DonHang {
     public void setNote(String note) { this.note = note; }
     public String getReceivingMethod() { return receivingMethod; }
     public void setReceivingMethod(String receivingMethod) { this.receivingMethod = receivingMethod; }
+    public String getShippingAddress() { return shippingAddress; }
+    public void setShippingAddress(String shippingAddress) { this.shippingAddress = shippingAddress; }
+    public String getReceiverName() { return receiverName; }
+    public void setReceiverName(String receiverName) { this.receiverName = receiverName; }
+    public String getReceiverPhone() { return receiverPhone; }
+    public void setReceiverPhone(String receiverPhone) { this.receiverPhone = receiverPhone; }
 }

@@ -53,6 +53,12 @@
                             <tr th:each="it : ${items}">
                                 <td>
                                     <div class="fw-semibold" th:text="${it.productName}"></div>
+                                    <!-- Sugar/Ice from GhiChu -->
+                                    <div class="mt-1" th:if="${it.note}">
+                                        <span th:each="p : ${it.note != null ? it.note.split(';') : {}}"
+                                              th:if="${#strings.contains(p,'Đường') or #strings.contains(p,'Đá')}"
+                                              class="badge bg-light text-dark border me-1" th:text="${#strings.trim(p)}"></span>
+                                    </div>
                                     <div class="small text-muted"
                                          th:if="${#maps.containsKey(toppings, it.id) and !#lists.isEmpty(toppings[it.id])}">
                                         <div class="mt-1">Topping:</div>
@@ -114,7 +120,7 @@
                                     th:disabled="${!(order.status=='ChoXuLy' || order.status=='DangPhaChe')}">Hủy</button>
                         </form>
                     </div>
-                    <form class="mt-2" th:if="${order.paymentMethod=='TienMat' && order.paymentStatus!='DaThanhToan'}" th:action="@{'/vendor/orders/' + ${order.id} + '/mark-cash-paid'}" method="post" onsubmit="return confirm('Xác nhận đã thu tiền mặt?');">
+                    <form class="mt-2" th:if="${order.paymentStatus!='DaThanhToan'}" th:action="@{'/vendor/orders/' + ${order.id} + '/mark-cash-paid'}" method="post" onsubmit="return confirm('Xác nhận đã thu tiền từ khách?');">
                         <input type="hidden" name="from" value="detail">
                         <button class="btn btn-success w-100" type="submit">Đã thu tiền</button>
                     </form>

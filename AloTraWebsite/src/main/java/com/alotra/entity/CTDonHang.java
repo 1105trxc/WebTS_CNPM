@@ -31,6 +31,9 @@ public class CTDonHang {
     @Column(name = "ThanhTien", nullable = false)
     private BigDecimal lineTotal;
 
+    @Column(name = "GhiChu")
+    private String note;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public DonHang getOrder() { return order; }
@@ -45,4 +48,6 @@ public class CTDonHang {
     public void setLineDiscount(BigDecimal lineDiscount) { this.lineDiscount = lineDiscount; }
     public BigDecimal getLineTotal() { return lineTotal; }
     public void setLineTotal(BigDecimal lineTotal) { this.lineTotal = lineTotal; }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 }

@@ -51,6 +51,12 @@
                             <tr th:each="it : ${items}">
                                 <td>
                                     <div class="fw-semibold" th:text="${it.productName}"></div>
+                                    <!-- Sugar/Ice from GhiChu -->
+                                    <div class="mt-1" th:if="${it.note}">
+                                        <span th:each="p : ${it.note != null ? it.note.split(';') : {}}"
+                                              th:if="${#strings.contains(p,'Đường') or #strings.contains(p,'Đá')}"
+                                              class="badge bg-light text-dark border me-1" th:text="${#strings.trim(p)}"></span>
+                                    </div>
                                     <div class="small text-muted" th:if="${#maps.containsKey(toppings, it.id) and !#lists.isEmpty(toppings[it.id])}">
                                         <div class="mt-1">Topping:</div>
                                         <ul class="small mb-0">
@@ -142,6 +148,20 @@
         </div>
 
         <div class="col-lg-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Nhận hàng</h5>
+                    <div class="mb-2">
+                        <strong>Phương thức:</strong>
+                        <span th:text="${order.receivingMethod == 'Ship' ? 'Ship tận nơi' : 'Đến cửa hàng lấy'}">Ship tận nơi</span>
+                    </div>
+                    <div th:if="${order.receivingMethod == 'Ship'}">
+                        <div><strong>Người nhận:</strong> <span th:text="${order.receiverName} ?: '-'">-</span></div>
+                        <div><strong>SĐT:</strong> <span th:text="${order.receiverPhone} ?: '-'">-</span></div>
+                        <div><strong>Địa chỉ:</strong> <span th:text="${order.shippingAddress} ?: '-'">-</span></div>
+                    </div>
+                </div>
+            </div>
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Tổng kết</h5>

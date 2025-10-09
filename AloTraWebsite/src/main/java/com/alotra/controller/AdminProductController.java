@@ -76,6 +76,8 @@ public class AdminProductController {
         model.addAttribute("currentPage", "products");
         model.addAttribute("product", new Product());
         model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
+        // Include sizes so we can define variants right at creation time
+        model.addAttribute("sizes", sizeRepository.findAll());
         return "admin/product-form";
     }
 
@@ -100,6 +102,10 @@ public class AdminProductController {
     public String save(@ModelAttribute Product product,
                        @RequestParam("categoryId") Integer categoryId,
                        @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+                       // New: batch variants right from the create form
+                       @RequestParam(value = "variantSizeId", required = false) List<Integer> variantSizeIds,
+                       @RequestParam(value = "variantPrice", required = false) List<BigDecimal> variantPrices,
+                       @RequestParam(value = "variantStatus", required = false) List<Integer> variantStatuses,
                        RedirectAttributes ra) {
         // attach category
         Category cat = new Category();
@@ -114,8 +120,35 @@ public class AdminProductController {
             String url = cloudinaryService.uploadFile(imageFile);
             product.setImageUrl(url);
         }
-        // save
-        productRepository.save(product);
+        // save product first to get ID
+        product = productRepository.save(product);
+
+        // If variants are provided in the same form (creation time), persist them now
+        if (variantSizeIds != null && !variantSizeIds.isEmpty()) {
+            // Ensure parallel lists are aligned; use min size to avoid IndexOutOfBounds
+            int n = variantSizeIds.size();
+            int pn = variantPrices != null ? variantPrices.size() : 0;
+            int sn = variantStatuses != null ? variantStatuses.size() : 0;
+            int limit = Math.min(n, Math.min(pn, Math.max(sn, n))); // status optional, default 1
+            // Avoid duplicate sizes within the same product
+            Set<Integer> seenSizeIds = new HashSet<>();
+            for (int i = 0; i < limit; i++) {
+                Integer sizeId = variantSizeIds.get(i);
+                BigDecimal price = (variantPrices != null && i < variantPrices.size()) ? variantPrices.get(i) : null;
+                Integer status = (variantStatuses != null && i < variantStatuses.size()) ? variantStatuses.get(i) : 1;
+                if (sizeId == null || price == null) continue;
+                if (price.signum() < 0) continue; // skip negative
+                if (!seenSizeIds.add(sizeId)) continue; // skip duplicate rows
+                ProductVariant v = new ProductVariant();
+                v.setProduct(product);
+                SizeSanPham sz = new SizeSanPham();
+                sz.setId(sizeId);
+                v.setSize(sz);
+                v.setPrice(price);
+                v.setStatus(status != null ? status : 1);
+                variantRepository.save(v);
+            }
+        }
         ra.addFlashAttribute("message", "Lưu sản phẩm thành công.");
         return "redirect:/admin/products";
     }

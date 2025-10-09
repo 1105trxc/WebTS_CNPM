@@ -19,7 +19,8 @@ public class CustomerOrderService {
     // List orders for a specific customer
     public List<OrderRow> listOrdersByCustomer(Integer customerId, String status) {
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan\n");
+        sb.append("SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan,\n");
+        sb.append(" dh.PhuongThucNhanHang, dh.TenNguoiNhan, dh.SDTNguoiNhan, dh.DiaChiNhanHang\n");
         sb.append("FROM DonHang dh WHERE dh.MaKH = ? ");
         java.util.List<Object> params = new java.util.ArrayList<>();
         params.add(customerId);
@@ -33,7 +34,8 @@ public class CustomerOrderService {
 
     // Ensure an order belongs to a customer then return it
     public OrderRow getOrderOfCustomer(Integer orderId, Integer customerId) {
-        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan\n" +
+        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan,\n" +
+                " dh.PhuongThucNhanHang, dh.TenNguoiNhan, dh.SDTNguoiNhan, dh.DiaChiNhanHang\n" +
                 "FROM DonHang dh WHERE dh.MaDH = ? AND dh.MaKH = ?";
         List<OrderRow> list = jdbc.query(sql, ORDER_ROW_MAPPER, orderId, customerId);
         return list.isEmpty() ? null : list.get(0);
@@ -41,7 +43,7 @@ public class CustomerOrderService {
 
     // Order items with variant (product + size)
     public List<OrderItemRow> listOrderItems(Integer orderId) {
-        String sql = "SELECT ct.MaCT, sp.TenSP, sz.TenSize, ct.SoLuong, ct.DonGia, ct.GiamGiaDong, ct.ThanhTien\n" +
+        String sql = "SELECT ct.MaCT, sp.TenSP, sz.TenSize, ct.SoLuong, ct.DonGia, ct.GiamGiaDong, ct.ThanhTien, ct.GhiChu\n" +
                 "FROM CTDonHang ct\n" +
                 "JOIN BienTheSanPham bt ON bt.MaBT = ct.MaBT\n" +
                 "JOIN SanPham sp ON sp.MaSP = bt.MaSP\n" +
@@ -63,7 +65,8 @@ public class CustomerOrderService {
 
     // Fetch order header by orderId regardless of customer (for vendor view)
     public OrderRow getOrder(Integer orderId) {
-        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan FROM DonHang dh WHERE dh.MaDH = ?";
+        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan,\n" +
+                " dh.PhuongThucNhanHang, dh.TenNguoiNhan, dh.SDTNguoiNhan, dh.DiaChiNhanHang FROM DonHang dh WHERE dh.MaDH = ?";
         List<OrderRow> list = jdbc.query(sql, ORDER_ROW_MAPPER, orderId);
         return list.isEmpty() ? null : list.get(0);
     }
@@ -75,6 +78,11 @@ public class CustomerOrderService {
         public String paymentStatus;
         public String paymentMethod;
         public java.math.BigDecimal total;
+        // New fields
+        public String receivingMethod;
+        public String receiverName;
+        public String receiverPhone;
+        public String shippingAddress;
     }
 
     public static class OrderItemRow {
@@ -85,6 +93,7 @@ public class CustomerOrderService {
         public java.math.BigDecimal unitPrice;
         public java.math.BigDecimal lineDiscount;
         public java.math.BigDecimal lineTotal;
+        public String note; // GhiChu: sugar/ice
     }
 
     public static class ItemToppingRow {
@@ -105,6 +114,11 @@ public class CustomerOrderService {
             r.paymentStatus = rs.getString("PaymentStatus");
             r.paymentMethod = rs.getString("PaymentMethod");
             r.total = rs.getBigDecimal("TongThanhToan");
+            // New mappings (defensive in case columns missing)
+            try { r.receivingMethod = rs.getString("PhuongThucNhanHang"); } catch (SQLException ignore) {}
+            try { r.receiverName = rs.getString("TenNguoiNhan"); } catch (SQLException ignore) {}
+            try { r.receiverPhone = rs.getString("SDTNguoiNhan"); } catch (SQLException ignore) {}
+            try { r.shippingAddress = rs.getString("DiaChiNhanHang"); } catch (SQLException ignore) {}
             return r;
         }
     };
@@ -120,6 +134,7 @@ public class CustomerOrderService {
             r.unitPrice = rs.getBigDecimal("DonGia");
             r.lineDiscount = rs.getBigDecimal("GiamGiaDong");
             r.lineTotal = rs.getBigDecimal("ThanhTien");
+            try { r.note = rs.getString("GhiChu"); } catch (SQLException ignore) { r.note = null; }
             return r;
         }
     };
