@@ -18,13 +18,20 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
         String getName();
         BigDecimal getPrice();
         String getImageUrl();
+        // New: total sold quantity (only paid orders)
+        Long getSoldQty();
     }
 
-    @Query(value = "SELECT sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, MIN(b.GiaBan) AS price " +
-            "FROM SanPham sp LEFT JOIN BienTheSanPham b ON b.MaSP = sp.MaSP " +
+    // Top 5 best sellers by total quantity sold (paid orders only). Includes products with zero sales.
+    @Query(value = "SELECT TOP 5 sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, " +
+            " MIN(b.GiaBan) AS price, COALESCE(SUM(CASE WHEN dh.PaymentStatus='DaThanhToan' THEN ct.SoLuong ELSE 0 END),0) AS soldQty " +
+            "FROM SanPham sp " +
+            "LEFT JOIN BienTheSanPham b ON b.MaSP = sp.MaSP " +
+            "LEFT JOIN CTDonHang ct ON ct.MaBT = b.MaBT " +
+            "LEFT JOIN DonHang dh ON dh.MaDH = ct.MaDH " +
             "WHERE sp.TrangThai = 1 AND sp.DeletedAt IS NULL " +
             "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
-            "ORDER BY sp.MaSP DESC", nativeQuery = true)
+            "ORDER BY soldQty DESC, sp.MaSP DESC", nativeQuery = true)
     List<BestSellerProjection> findBestSellersNative();
 
     // New: list products by category (null = all)

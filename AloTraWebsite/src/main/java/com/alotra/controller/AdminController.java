@@ -3,8 +3,10 @@ package com.alotra.controller;
 import com.alotra.entity.Category;
 import com.alotra.entity.Topping;
 import com.alotra.repository.CategoryRepository;
+import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ToppingRepository;
 import com.alotra.service.CloudinaryService;
+import com.alotra.service.StatsService; // added
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,7 +17,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import com.alotra.repository.ProductRepository; // add
 
 @Controller
 @RequestMapping("/admin")
@@ -24,12 +25,14 @@ public class AdminController {
     private final ToppingRepository toppingRepository;
     private final CloudinaryService cloudinaryService;
     private final ProductRepository productRepository; // add
+    private final StatsService statsService; // new
 
-    public AdminController(CategoryRepository categoryRepository, ToppingRepository toppingRepository, CloudinaryService cloudinaryService, ProductRepository productRepository) {
+    public AdminController(CategoryRepository categoryRepository, ToppingRepository toppingRepository, CloudinaryService cloudinaryService, ProductRepository productRepository, StatsService statsService) {
         this.categoryRepository = categoryRepository;
         this.toppingRepository = toppingRepository;
         this.cloudinaryService = cloudinaryService;
         this.productRepository = productRepository; // add
+        this.statsService = statsService; // assign
     }
 
     @GetMapping
@@ -39,8 +42,10 @@ public class AdminController {
 
     @GetMapping("/dashboard")
     public String showDashboard(Model model) {
+        var stats = statsService.loadDashboardStats();
         model.addAttribute("pageTitle", "Tổng quan");
         model.addAttribute("currentPage", "dashboard");
+        model.addAttribute("stats", stats);
         return "admin/dashboard";
     }
 

@@ -57,3 +57,75 @@ body {
 #wrapper #page-content-wrapper {
     transition: margin 0.3s ease;
 }
+
+/* Dashboard KPI cards */
+.kpi-card {
+    border-radius: 16px;
+    padding: 14px 16px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 110px;
+}
+
+.kpi-label {
+    font-size: .7rem;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    opacity: .9;
+    font-weight: 600;
+}
+
+.kpi-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.kpi-sub {
+    font-size: .7rem;
+    opacity: .85;
+}
+
+.gradient-green {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.gradient-blue {
+    background: linear-gradient(135deg, #4dabf7, #1e88e5);
+}
+
+.gradient-orange {
+    background: linear-gradient(135deg, #f6a319, #f57c00);
+}
+
+.gradient-purple {
+    background: linear-gradient(135deg, #a54ef6, #7b2ff7);
+}
+
+.gradient-teal {
+    background: linear-gradient(135deg, #20c997, #138f6e);
+}
+
+.gradient-gray {
+    background: linear-gradient(135deg, #6c757d, #495057);
+}
+
+@media (max-width: 575.98px) {
+    .kpi-card {
+        min-height: 100px;
+        padding: 12px;
+    }
+
+    .kpi-value {
+        font-size: 1.2rem;
+    }
+}
+
+.card-header {
+    font-weight: 600;
+}
