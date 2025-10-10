@@ -3,11 +3,12 @@ package com.alotra.service;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
 public class NotificationService {
+    private static final ZoneId HCM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private final JdbcTemplate jdbc;
 
     public NotificationService(JdbcTemplate jdbc) { this.jdbc = jdbc; }
@@ -70,7 +71,7 @@ public class NotificationService {
             m.put("id", rs.getInt("MaDH"));
             m.put("status", rs.getString("TrangThaiDonHang"));
             java.sql.Timestamp ts = rs.getTimestamp("NgayLap");
-            m.put("createdAt", ts != null ? ts.toInstant().atOffset(java.time.ZoneOffset.UTC) : null);
+            m.put("createdAt", ts != null ? ts.toInstant().atZone(HCM_ZONE).toOffsetDateTime() : null);
             return m;
         });
     }

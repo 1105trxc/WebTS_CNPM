@@ -18,6 +18,6 @@ public interface KhuyenMaiSanPhamRepository extends JpaRepository<KhuyenMaiSanPh
     @Query(value = "SELECT MAX(k.PhanTramGiam) FROM KhuyenMaiSanPham k\n" +
             "JOIN SuKienKhuyenMai s ON s.MaKM = k.MaKM\n" +
             "WHERE k.MaSP = :productId AND s.TrangThai = 1\n" +
-            "AND CONVERT(date, SYSUTCDATETIME()) BETWEEN s.NgayBD AND s.NgayKT", nativeQuery = true)
+            "AND CONVERT(date, SYSDATETIME()) BETWEEN s.NgayBD AND s.NgayKT", nativeQuery = true)
     Integer findActiveMaxDiscountPercentForProduct(@Param("productId") Integer productId);
 }

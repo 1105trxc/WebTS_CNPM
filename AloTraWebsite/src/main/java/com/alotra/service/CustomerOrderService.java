@@ -6,10 +6,12 @@ import org.springframework.stereotype.Service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
 public class CustomerOrderService {
+    private static final ZoneId HCM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private final JdbcTemplate jdbc;
 
     public CustomerOrderService(JdbcTemplate jdbc) {
@@ -109,7 +111,7 @@ public class CustomerOrderService {
             OrderRow r = new OrderRow();
             r.id = rs.getInt("MaDH");
             java.sql.Timestamp ts = rs.getTimestamp("NgayLap");
-            r.createdAt = ts != null ? ts.toInstant().atOffset(java.time.ZoneOffset.UTC) : null;
+            r.createdAt = ts != null ? ts.toInstant().atZone(HCM_ZONE).toOffsetDateTime() : null;
             r.status = rs.getString("TrangThaiDonHang");
             r.paymentStatus = rs.getString("PaymentStatus");
             r.paymentMethod = rs.getString("PaymentMethod");

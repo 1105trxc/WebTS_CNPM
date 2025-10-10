@@ -78,16 +78,6 @@
                                     <button class="btn btn-sm btn-outline-danger" type="submit"
                                             th:disabled="${!(o.status=='ChoXuLy' || o.status=='DangPhaChe')}">Hủy</button>
                                 </form>
-                                <form th:action="@{'/vendor/orders/' + ${o.id} + '/assign'}" method="post">
-                                    <div class="input-group input-group-sm" style="width: 240px;">
-                                        <select class="form-select" name="employeeId" th:disabled="${(o.paymentMethod=='ChuyenKhoan' && o.paymentStatus!='DaThanhToan')}">
-                                            <option th:each="e : ${employees}" th:value="${e.id}"
-                                                    th:text="${e.fullName + ' (' + e.username + ')'}"></option>
-                                        </select>
-                                        <button class="btn btn-outline-secondary" type="submit" th:disabled="${(o.paymentMethod=='ChuyenKhoan' && o.paymentStatus!='DaThanhToan')}">Gán</button>
-                                    </div>
-                                    <input type="hidden" name="from" th:value="${from}">
-                                </form>
                                 <form th:if="${o.paymentStatus!='DaThanhToan'}" th:action="@{'/vendor/orders/' + ${o.id} + '/mark-cash-paid'}" method="post" onsubmit="return confirm('Xác nhận đã thu tiền từ khách?');">
                                     <input type="hidden" name="from" th:value="${from}">
                                     <button class="btn btn-sm btn-success" type="submit">Đã thu tiền</button>

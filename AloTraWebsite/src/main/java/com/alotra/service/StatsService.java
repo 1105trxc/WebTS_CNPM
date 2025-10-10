@@ -40,7 +40,7 @@ public class StatsService {
 
     private List<Map<String,Object>> revenueDaily(int days){
         String sql = "SELECT CONVERT(date, NgayLap) d, SUM(TongThanhToan) total FROM DonHang " +
-                "WHERE NgayLap >= DATEADD(day, -?, CONVERT(date, SYSUTCDATETIME())) " +
+                "WHERE NgayLap >= DATEADD(day, -?, CONVERT(date, SYSDATETIME())) " +
                 "AND PaymentStatus='DaThanhToan' " +
                 "GROUP BY CONVERT(date, NgayLap) ORDER BY d";
         return jdbc.query(sql, ps -> ps.setInt(1, days-1), (rs,i)-> Map.of(

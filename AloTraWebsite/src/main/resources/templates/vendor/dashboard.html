@@ -3,6 +3,10 @@
       th:replace="~{layouts/vendor-layout :: layout(pageTitle='Kênh Người Bán - Bảng điều khiển', pageContent=~{::pageContent})}">
 <body>
 <div class="page-content" th:fragment="pageContent" th:with="currentPage='vendor-dashboard'">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Bảng điều khiển</h4>
+        <a th:href="@{/vendor/reports/shift}" class="btn btn-sm btn-outline-success"><i class="fas fa-file-alt me-1"></i> Báo cáo cuối ca</a>
+    </div>
     <div class="row g-3">
         <div class="col-md-3">
             <div class="card text-bg-warning">

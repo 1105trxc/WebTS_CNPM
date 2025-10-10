@@ -6,12 +6,14 @@ import org.springframework.stereotype.Service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class VendorOrderService {
+    private static final ZoneId HCM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private final JdbcTemplate jdbc;
 
     public VendorOrderService(JdbcTemplate jdbc) {
@@ -23,8 +25,8 @@ public class VendorOrderService {
         m.put("pending", countByStatus("ChoXuLy"));
         m.put("preparing", countByStatus("DangPhaChe"));
         m.put("shipping", countByStatus("DangGiao"));
-        // Today orders by date only (UTC)
-        String sqlToday = "SELECT COUNT(*) FROM DonHang WHERE CONVERT(date, NgayLap) = CONVERT(date, SYSUTCDATETIME())";
+        // Today orders by date only (server local time)
+        String sqlToday = "SELECT COUNT(*) FROM DonHang WHERE CONVERT(date, NgayLap) = CONVERT(date, SYSDATETIME())";
         Integer today = jdbc.queryForObject(sqlToday, Integer.class);
         m.put("today", today == null ? 0 : today);
         return m;
@@ -60,10 +62,6 @@ public class VendorOrderService {
         jdbc.update("UPDATE DonHang SET TrangThaiDonHang = ? WHERE MaDH = ?", newStatus, id);
     }
 
-    public void assignHandler(Integer id, Integer employeeId) {
-        jdbc.update("UPDATE DonHang SET MaNV = ? WHERE MaDH = ?", employeeId, id);
-    }
-
     public static class OrderRow {
         public Integer id;
         public java.time.OffsetDateTime createdAt;
@@ -81,7 +79,7 @@ public class VendorOrderService {
             OrderRow r = new OrderRow();
             r.id = rs.getInt("MaDH");
             java.sql.Timestamp ts = rs.getTimestamp("NgayLap");
-            r.createdAt = ts != null ? ts.toInstant().atOffset(java.time.ZoneOffset.UTC) : null;
+            r.createdAt = ts != null ? ts.toInstant().atZone(HCM_ZONE).toOffsetDateTime() : null;
             r.status = rs.getString("TrangThaiDonHang");
             r.paymentStatus = rs.getString("PaymentStatus");
             r.paymentMethod = rs.getString("PaymentMethod");
@@ -110,7 +108,7 @@ public class VendorOrderService {
     public List<OrderRow> listTodayOrders() {
         String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n" +
                 "FROM DonHang dh JOIN KhachHang kh ON kh.MaKH = dh.MaKH\n" +
-                "WHERE CONVERT(date, dh.NgayLap) = CONVERT(date, SYSUTCDATETIME())\n" +
+                "WHERE CONVERT(date, dh.NgayLap) = CONVERT(date, SYSDATETIME())\n" +
                 "ORDER BY dh.MaDH DESC";
         return jdbc.query(sql, ORDER_ROW_MAPPER);
     }

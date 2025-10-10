@@ -3,7 +3,6 @@ package com.alotra.controller.vendor;
 import com.alotra.entity.DonHang;
 import com.alotra.repository.DonHangRepository;
 import com.alotra.service.CustomerOrderService;
-import com.alotra.service.NhanVienService;
 import com.alotra.service.VendorOrderService;
 import com.alotra.service.CustomerOrderService.OrderItemRow;
 import com.alotra.service.CustomerOrderService.ItemToppingRow;
@@ -23,16 +22,13 @@ public class VendorController {
     private final VendorOrderService vendorOrderService;
     private final CustomerOrderService customerOrderService;
     private final DonHangRepository donHangRepository;
-    private final NhanVienService nhanVienService;
 
     public VendorController(VendorOrderService vendorOrderService,
                             CustomerOrderService customerOrderService,
-                            DonHangRepository donHangRepository,
-                            NhanVienService nhanVienService) {
+                            DonHangRepository donHangRepository) {
         this.vendorOrderService = vendorOrderService;
         this.customerOrderService = customerOrderService;
         this.donHangRepository = donHangRepository;
-        this.nhanVienService = nhanVienService;
     }
 
     @GetMapping({"", "/dashboard"})
@@ -49,7 +45,6 @@ public class VendorController {
                              @RequestParam(required = false, defaultValue = "list") String from,
                              Model model) {
         model.addAttribute("items", vendorOrderService.listOrders(status, kw, limit));
-        model.addAttribute("employees", nhanVienService.search(null, 2, 1));
         model.addAttribute("status", status);
         model.addAttribute("kw", kw);
         model.addAttribute("limit", limit);
@@ -71,23 +66,42 @@ public class VendorController {
         model.addAttribute("order", order);
         model.addAttribute("items", items);
         model.addAttribute("toppings", toppings);
-        model.addAttribute("employees", nhanVienService.search(null, 2, 1));
         model.addAttribute("pageTitle", "Đơn #" + id);
         return "vendor/order-detail";
+    }
+
+    @GetMapping("/orders/{id}/invoice")
+    public String invoice(@PathVariable Integer id, Model model) {
+        OrderRow order = customerOrderService.getOrder(id);
+        if (order == null) {
+            return "redirect:/vendor/orders";
+        }
+        List<OrderItemRow> items = customerOrderService.listOrderItems(id);
+        Map<Integer, List<ItemToppingRow>> toppings = new HashMap<>();
+        for (OrderItemRow it : items) {
+            toppings.put(it.id, customerOrderService.listOrderItemToppings(it.id));
+        }
+        model.addAttribute("order", order);
+        model.addAttribute("items", items);
+        model.addAttribute("toppings", toppings);
+        model.addAttribute("storeName", "AloTra");
+        model.addAttribute("storeAddress", "Khu pho 6, P. Linh Trung, TP. Thu Duc, TP. HCM");
+        model.addAttribute("storePhone", "1900 1234");
+        return "vendor/invoice";
     }
 
     @PostMapping("/orders/{id}/advance")
     public String advance(@PathVariable Integer id, @RequestParam(required = false) String from) {
         DonHang dh = donHangRepository.findById(id).orElse(null);
         if (dh != null) {
-            // Gate: block advancing any step for unpaid bank transfer
+            // Block advancing when unpaid bank transfer
             if ("ChuyenKhoan".equalsIgnoreCase(String.valueOf(dh.getPaymentMethod()))
                     && !"DaThanhToan".equals(dh.getPaymentStatus())) {
                 return redirectFrom(id, from);
             }
-            String current = dh.getStatus();
-            String next = vendorOrderService.nextStatus(current);
-            if (next != null && !next.equals(current)) {
+            String currentSt = dh.getStatus();
+            String next = vendorOrderService.nextStatus(currentSt);
+            if (next != null && !next.equals(currentSt)) {
                 vendorOrderService.updateStatus(id, next);
             }
         }
@@ -96,29 +110,14 @@ public class VendorController {
 
     @PostMapping("/orders/{id}/cancel")
     public String cancel(@PathVariable Integer id, @RequestParam(required = false) String from) {
-        String current = donHangRepository.findById(id).map(DonHang::getStatus).orElse(null);
-        if (vendorOrderService.canCancel(current)) {
+        DonHang dh = donHangRepository.findById(id).orElse(null);
+        String currentSt = dh != null ? dh.getStatus() : null;
+        if (vendorOrderService.canCancel(currentSt)) {
             vendorOrderService.updateStatus(id, "DaHuy");
         }
         return redirectFrom(id, from);
     }
 
-    @PostMapping("/orders/{id}/assign")
-    public String assign(@PathVariable Integer id, @RequestParam Integer employeeId,
-                         @RequestParam(required = false) String from) {
-        DonHang dh = donHangRepository.findById(id).orElse(null);
-        if (dh != null) {
-            // Gate: block assigning for unpaid bank transfer
-            if ("ChuyenKhoan".equalsIgnoreCase(String.valueOf(dh.getPaymentMethod()))
-                    && !"DaThanhToan".equals(dh.getPaymentStatus())) {
-                return redirectFrom(id, from);
-            }
-            vendorOrderService.assignHandler(id, employeeId);
-        }
-        return redirectFrom(id, from);
-    }
-
-    // Staff marks orders as paid (regardless of method)
     @PostMapping("/orders/{id}/mark-cash-paid")
     public String markCashPaid(@PathVariable Integer id, @RequestParam(required = false) String from) {
         donHangRepository.findById(id).ifPresent(dh -> {

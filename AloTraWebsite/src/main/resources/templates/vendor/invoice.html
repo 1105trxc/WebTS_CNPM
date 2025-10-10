@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${'Hoa don - #' + order.id}">Hoa don</title>
+    <style>
+        :root { --fg:#222; --muted:#666; --accent:#198754; }
+        *{ box-sizing: border-box; }
+        body{ font-family: Arial, Helvetica, sans-serif; color: var(--fg); margin: 0; padding: 16px; }
+        .invoice { max-width: 820px; margin: 0 auto; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden; }
+        .inv-header{ display:flex; justify-content:space-between; align-items:flex-start; padding:16px; border-bottom:1px solid #eee; }
+        .brand h2{ margin:0 0 6px; color: var(--accent); }
+        .muted{ color: var(--muted); font-size: .95rem; }
+        .inv-meta{ text-align:right; }
+        .inv-meta div { margin-bottom: 4px; }
+        .section{ padding:12px 16px; }
+        .grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .card{ border:1px solid #eee; border-radius:6px; padding:12px; }
+        table{ width:100%; border-collapse: collapse; }
+        th, td{ padding:8px; border-bottom:1px solid #f0f0f0; vertical-align: top; }
+        thead th{ text-align:left; background:#fafafa; }
+        tfoot td{ font-weight: bold; }
+        .text-end{ text-align:right; }
+        .text-center{ text-align:center; }
+        .badge{ display:inline-block; padding:2px 8px; border-radius:10px; background:#eee; font-size:.85rem; }
+        .controls{ display:flex; gap:8px; justify-content:flex-end; padding:10px 16px; border-top:1px solid #eee; }
+        .btn{ border:1px solid #ddd; background:#fff; padding:8px 12px; border-radius:6px; cursor:pointer; }
+        .btn-primary{ border-color: var(--accent); color:#fff; background: var(--accent); }
+        @media print{
+            .controls { display:none !important; }
+            body { padding: 0; }
+            .invoice { border: none; border-radius: 0; }
+            a[href]::after { content: ""; }
+        }
+    </style>
+</head>
+<body onload="try{window.print()}catch(e){}">
+<div class="invoice">
+    <div class="inv-header">
+        <div class="brand">
+            <h2 th:text="${storeName} ?: 'AloTra'"></h2>
+            <div class="muted" th:text="${storeAddress} ?: ''"></div>
+            <div class="muted" th:text="${'Hotline: ' + (storePhone ?: '')}"></div>
+        </div>
+        <div class="inv-meta">
+            <div><strong>Hoa don</strong></div>
+            <div>Mã đơn: <strong th:text="${order.id}"></strong></div>
+            <div>Ngày: <span th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></span></div>
+            <div>Thanh toán: <span class="badge" th:text="${order.paymentMethod == 'ChuyenKhoan' ? 'Chuyen khoan' : 'Tien mat'}"></span>
+                <span class="badge" th:text="${order.paymentStatus}"></span></div>
+            <div>Trang thai: <span class="badge" th:text="${order.status}"></span></div>
+        </div>
+    </div>
+
+    <div class="section grid">
+        <div class="card">
+            <div><strong>Khach hang</strong></div>
+            <div class="muted" th:text="${order.receiverName} ?: '-'">-</div>
+            <div class="muted" th:text="${order.receiverPhone} ?: '-'">-</div>
+            <div class="muted" th:if="${order.receivingMethod == 'Ship'}" th:text="${order.shippingAddress} ?: '-'">-</div>
+            <div class="muted" th:if="${order.receivingMethod != 'Ship'}">Nhan tai cua hang</div>
+        </div>
+        <div class="card">
+            <div><strong>Ghi chu</strong></div>
+            <div class="muted">Vui long kiem tra ky truoc khi roi quan.</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <table>
+            <thead>
+            <tr>
+                <th>San pham</th>
+                <th class="text-center">Size</th>
+                <th class="text-center">SL</th>
+                <th class="text-end">Don gia</th>
+                <th class="text-end">Giam dong</th>
+                <th class="text-end">Thanh tien</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="it : ${items}">
+                <td>
+                    <div><strong th:text="${it.productName}"></strong></div>
+                    <div class="muted" th:if="${it.note}">
+                        <span th:each="p : ${it.note != null ? it.note.split(';') : {}}"
+                              th:if="${#strings.contains(p,'Đường') or #strings.contains(p,'Đá')}"
+                              class="badge" th:text="${#strings.trim(p)}"></span>
+                    </div>
+                    <div class="muted" th:if="${#maps.containsKey(toppings, it.id) and !#lists.isEmpty(toppings[it.id])}">
+                        <div>Topping:</div>
+                        <ul style="margin:4px 0 0 18px; padding:0;">
+                            <li th:each="tp : ${toppings[it.id]}"
+                                th:text="${tp.toppingName + ' x' + tp.quantity + ' (' + #numbers.formatDecimal(tp.unitPrice,0,'COMMA',0,'POINT') + ' ₫) = ' + #numbers.formatDecimal(tp.total,0,'COMMA',0,'POINT') + ' ₫'}"></li>
+                        </ul>
+                    </div>
+                </td>
+                <td class="text-center" th:text="${it.sizeName}"></td>
+                <td class="text-center" th:text="${it.quantity}"></td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(it.lineDiscount, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(items)}">
+                <td colspan="6" class="text-center">Khong co san pham.</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="5" class="text-end">Tong thanh toan</td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(order.total, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="window.close()">Dong</button>
+        <button class="btn btn-primary" onclick="window.print()">In hoa don</button>
+    </div>
+</div>
+</body>
+</html>

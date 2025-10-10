@@ -98,17 +98,8 @@
             <div class="card">
                 <div class="card-body">
                     <h6 class="card-title">Xử lý đơn</h6>
-                    <form th:action="@{'/vendor/orders/' + ${order.id} + '/assign'}" method="post" class="mb-2">
-                        <div class="input-group">
-                            <select class="form-select" name="employeeId" th:disabled="${order.paymentMethod=='ChuyenKhoan' && order.paymentStatus!='DaThanhToan'}">
-                                <option th:each="e : ${employees}" th:value="${e.id}"
-                                        th:text="${e.fullName + ' (' + e.username + ')'}"></option>
-                            </select>
-                            <button class="btn btn-outline-secondary" type="submit" th:disabled="${order.paymentMethod=='ChuyenKhoan' && order.paymentStatus!='DaThanhToan'}">Gán</button>
-                        </div>
-                        <input type="hidden" name="from" value="detail">
-                    </form>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a th:href="@{'/vendor/orders/' + ${order.id} + '/invoice'}" target="_blank" class="btn btn-outline-secondary">In hóa đơn</a>
                         <form th:action="@{'/vendor/orders/' + ${order.id} + '/advance'}" method="post">
                             <input type="hidden" name="from" value="detail">
                             <button class="btn btn-primary" type="submit"
