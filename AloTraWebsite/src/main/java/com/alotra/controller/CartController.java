@@ -113,8 +113,12 @@ public class CartController {
                     String idStr = key.substring(9, key.length() - 1);
                     try {
                         Integer tid = Integer.valueOf(idStr);
-                        Integer q = Integer.valueOf(params.getFirst(key));
-                        if (q != null && q > 0) map.put(tid, q);
+                        String raw = params.getFirst(key);
+                        Integer q;
+                        try { q = (raw == null || raw.isBlank()) ? 0 : Integer.valueOf(raw); }
+                        catch (NumberFormatException nfe) { q = 0; }
+                        // Include even when q == 0 so the service can delete it
+                        map.put(tid, Math.max(0, q));
                     } catch (NumberFormatException ignored) {}
                 }
             }

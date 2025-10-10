@@ -7,10 +7,20 @@
 <body>
 <th:block th:fragment="content">
     <div class="container my-4">
+        <style>
+            /* Inline styles scoped to Cart page */
+            .cart-top-box { background:#f8f9fa; border:1px dashed #dee2e6; border-radius:.5rem; padding: .75rem; }
+            .cart-top-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
+            .cart-top-list { display:grid; gap:.5rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+            .cart-top-item { background:#fff; border:1px solid #e9ecef; border-radius:.5rem; padding:.5rem .6rem; display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
+            .cart-top-item .meta { min-width:0; }
+            .cart-top-item .name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            .cart-top-item .price { font-size:.85rem; color:#6c757d; }
+            @media (max-width: 576px){ .cart-top-item .input-group { width: 120px; } }
+        </style>
         <h3 class="mb-3">Giỏ hàng của bạn</h3>
         <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-        <!-- Table of cart items (no outer form to avoid nested forms) -->
         <div class="table-responsive">
             <table id="cartTable" class="table table-hover align-middle">
                 <thead>
@@ -25,85 +35,96 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="it : ${items}">
-                    <td>
-                        <input type="checkbox" name="itemIds" th:value="${it.id}" class="item-check" form="checkoutForm">
-                    </td>
-                    <td>
-                        <div class="fw-semibold" th:text="${it.variant.product.name}">Tên</div>
-                        <!-- Show sugar/ice badges only; ignore any legacy 'Trà' entries in note -->
-                        <div class="mt-1" th:if="${it.note}">
-                            <span th:each="p : ${it.note != null ? it.note.split(';') : {}}" th:if="${#strings.contains(p,'Đường') or #strings.contains(p,'Đá')}"
-                                  class="badge bg-light text-dark border me-1" th:text="${#strings.trim(p)}"></span>
-                        </div>
-                        <!-- Current toppings for this item -->
-                        <div class="small mt-1" th:if="${itemToppingsMap[it.id] != null and !#lists.isEmpty(itemToppingsMap[it.id])}">
-                            <span class="text-muted">Topping:</span>
-                            <span th:each="t : ${itemToppingsMap[it.id]}" class="badge bg-success text-white me-1">
-                                <span th:text="${t.topping.name}">Name</span>
-                                <span class="ms-1" th:text="'x' + ${t.quantity}"></span>
-                            </span>
-                        </div>
-                    </td>
-                    <td>
-                        <!-- Size selector: change variant (size) of this cart item -->
-                        <form th:action="@{'/cart/item/' + ${it.id} + '/variant'}" method="post" class="d-inline">
-                            <select class="form-select form-select-sm" name="variantId" onchange="this.form.submit()">
-                                <option th:each="v : ${itemVariantsMap[it.id]}" th:value="${v.id}"
-                                        th:selected="${v.id == it.variant.id}"
-                                        th:text="${v.size.name}"></option>
-                            </select>
-                        </form>
-                    </td>
-                    <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'" data-unit-price="[[${it.unitPrice}]]"></td>
-                    <td class="text-center">
-                        <form th:action="@{/cart/update}" method="post" class="d-inline">
-                            <input type="hidden" name="itemId" th:value="${it.id}">
-                            <input name="qty" type="number" min="0" class="form-control d-inline-block" style="width: 80px" th:value="${it.quantity}" onchange="this.form.submit()">
-                        </form>
-                    </td>
-                    <td class="text-end line-total"
-                        th:text="${#numbers.formatDecimal(it.lineTotal,0,'COMMA',0,'POINT')} + ' ₫'"
-                        th:attr="data-line-total=${it.lineTotal}"></td>
-                    <td class="text-end">
-                        <a th:href="@{'/cart/remove/' + ${it.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa mục này khỏi giỏ?')">Xóa</a>
-                    </td>
-                </tr>
-                <tr th:each="it,iterStat : ${items}">
-                    <td colspan="7" class="bg-light">
-                        <form th:action="@{'/cart/item/' + ${it.id} + '/toppings'}" method="post">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="fw-semibold">
-                                    Topping kèm theo cho: <span th:text="${it.variant.product.name}">Sản phẩm</span>
-                                    (<span th:text="${it.variant.size.name}">Size</span>)
-                                </div>
-                                <div class="text-muted small">Chọn số lượng cho từng loại topping</div>
-                            </div>
-                            <div class="row g-2">
-                                <div class="col-12" th:if="${#lists.isEmpty(toppingsCatalog)}">
-                                    <div class="text-muted small">Chưa có topping nào khả dụng.</div>
-                                </div>
-                                <div class="col-6 col-md-4 col-lg-3" th:each="t : ${toppingsCatalog}">
-                                    <div class="border rounded p-2 d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="small fw-semibold" th:text="${t.name}">Topping</div>
-                                            <div class="text-muted small" th:text="${#numbers.formatDecimal(t.extraPrice,0,'COMMA',0,'POINT')} + ' ₫'">5.000 ₫</div>
-                                        </div>
-                                        <div class="input-group input-group-sm" style="width: 120px;">
-                                            <button class="btn btn-outline-success" type="button" onclick="this.nextElementSibling.stepDown()">-</button>
-                                            <input class="form-control text-center" type="number" min="0" th:name="${'toppings[' + t.id + ']'}"
-                                                   th:value="${itemTopQtyMap[it.id] != null && itemTopQtyMap[it.id].get(t.id) != null ? itemTopQtyMap[it.id].get(t.id) : 0}">
-                                            <button class="btn btn-outline-success" type="button" onclick="this.previousElementSibling.stepUp()">+</button>
-                                        </div>
+                <th:block th:each="it : ${items}">
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="itemIds" th:value="${it.id}" class="item-check" form="checkoutForm">
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-semibold" th:text="${it.variant.product.name}">Tên</div>
+                                    <!-- Sugar/Ice badges (if any) -->
+                                    <div class="mt-1" th:if="${it.note}">
+                                        <span th:each="p : ${it.note != null ? it.note.split(';') : {}}" th:if="${#strings.contains(p,'Đường') or #strings.contains(p,'Đá')}"
+                                              class="badge bg-light text-dark border me-1" th:text="${#strings.trim(p)}"></span>
+                                    </div>
+                                    <!-- Compact topping summary badges under name -->
+                                    <div class="small mt-1" th:if="${itemToppingsMap[it.id] != null and !#lists.isEmpty(itemToppingsMap[it.id])}">
+                                        <span class="text-muted">Topping:</span>
+                                        <span th:each="t : ${itemToppingsMap[it.id]}" class="badge bg-success text-white me-1">
+                                            <span th:text="${t.topping.name}">Name</span>
+                                            <span class="ms-1" th:text="'x' + ${t.quantity}"></span>
+                                        </span>
                                     </div>
                                 </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary toggle-toppings ms-2"
+                                        th:attr="data-target='tops-row-' + ${it.id}" title="Topping">
+                                    <i class="fa fa-chevron-down"></i>
+                                </button>
                             </div>
-                            <div class="text-end mt-2">
-                                <button class="btn btn-sm btn-success">Cập nhật topping</button>
+                        </td>
+                        <td>
+                            <form th:action="@{'/cart/item/' + ${it.id} + '/variant'}" method="post" class="d-inline">
+                                <select class="form-select form-select-sm" name="variantId" onchange="this.form.submit()">
+                                    <option th:each="v : ${itemVariantsMap[it.id]}" th:value="${v.id}"
+                                            th:selected="${v.id == it.variant.id}"
+                                            th:text="${v.size.name}"></option>
+                                </select>
+                            </form>
+                        </td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'" data-unit-price="[[${it.unitPrice}]]"></td>
+                        <td class="text-center">
+                            <form th:action="@{/cart/update}" method="post" class="d-inline">
+                                <input type="hidden" name="itemId" th:value="${it.id}">
+                                <input name="qty" type="number" min="0" class="form-control d-inline-block" style="width: 80px" th:value="${it.quantity}" onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td class="text-end line-total"
+                            th:text="${#numbers.formatDecimal(it.lineTotal,0,'COMMA',0,'POINT')} + ' ₫'"
+                            th:attr="data-line-total=${it.lineTotal}"></td>
+                        <td class="text-end">
+                            <a th:href="@{'/cart/remove/' + ${it.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa mục này khỏi giỏ?')">Xóa</a>
+                        </td>
+                    </tr>
+                    <!-- Child row: toppings editor for this item (hidden by default, toggled by chevron) -->
+                    <tr th:attr="id=${'tops-row-' + it.id}" class="bg-light d-none">
+                        <td colspan="7">
+                            <div class="cart-top-box">
+                                <div class="cart-top-header">
+                                    <div class="fw-semibold">
+                                        Topping cho <span th:text="${it.variant.product.name}">Sản phẩm</span>
+                                        (<span th:text="${it.variant.size.name}">Size</span>)
+                                    </div>
+                                    <div class="text-muted small">Chọn số lượng cho từng loại topping</div>
+                                </div>
+                                <form th:action="@{'/cart/item/' + ${it.id} + '/toppings'}" method="post">
+                                    <div class="cart-top-list">
+                                        <div class="col-12" th:if="${#lists.isEmpty(toppingsCatalog)}">
+                                            <div class="text-muted small">Chưa có topping nào khả dụng.</div>
+                                        </div>
+                                        <div class="cart-top-item" th:each="t : ${toppingsCatalog}">
+                                            <div class="meta">
+                                                <div class="name" th:text="${t.name}">Topping</div>
+                                                <div class="price" th:text="${#numbers.formatDecimal(t.extraPrice,0,'COMMA',0,'POINT')} + ' ₫/đv'"></div>
+                                            </div>
+                                            <div class="input-group input-group-sm" style="width: 140px;">
+                                                <button class="btn btn-outline-success" type="button" onclick="this.nextElementSibling.stepDown()">-</button>
+                                                <input class="form-control text-center" type="number" min="0" th:name="${'toppings[' + t.id + ']'}"
+                                                       th:value="${itemTopQtyMap[it.id] != null && itemTopQtyMap[it.id].get(t.id) != null ? itemTopQtyMap[it.id].get(t.id) : 0}">
+                                                <button class="btn btn-outline-success" type="button" onclick="this.previousElementSibling.stepUp()">+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-end mt-2">
+                                        <button class="btn btn-sm btn-success" type="submit">Cập nhật topping</button>
+                                    </div>
+                                </form>
                             </div>
-                        </form>
-                    </td>
-                </tr>
+                        </td>
+                    </tr>
+                </th:block>
+
                 <tr th:if="${#lists.isEmpty(items)}">
                     <td colspan="7" class="text-center">Giỏ hàng trống.</td>
                 </tr>
@@ -117,23 +138,20 @@
                 </tfoot>
             </table>
         </div>
-        <!-- Tổng tiền các dòng đã chọn -->
         <div class="d-flex justify-content-end align-items-center mt-2">
             <span class="me-2 fw-semibold">Tổng tiền đã chọn:</span>
             <span id="selectedTotal" class="fs-5 text-success">0 ₫</span>
         </div>
-        <!-- Checkout form (standalone) -->
         <form id="checkoutForm" th:action="@{/checkout/confirm}" method="post" class="d-flex justify-content-between mt-2" onsubmit="return confirmCheckout()">
             <a th:href="@{/}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
             <div>
-
                 <button class="btn btn-success" type="submit" th:disabled="${#lists.isEmpty(items)}">Đặt hàng</button>
             </div>
         </form>
     </div>
 </th:block>
 <th:block th:fragment="additionalJs">
-    <script th:src="@{/js/cart.js}"></script>
+    <!-- No extra JS needed; cart.js is loaded globally in layout -->
 </th:block>
 </body>
 </html>

@@ -47,6 +47,23 @@
       syncCheckAll();
     });
 
+    // Toppings toggle per item
+    $table.on('click', '.toggle-toppings', function(){
+      var targetId = $(this).attr('data-target');
+      if (!targetId) return;
+      var $row = $('#' + targetId);
+      if ($row.length === 0) return;
+      var $icon = $(this).find('i.fa');
+      var isHidden = $row.hasClass('d-none');
+      if (isHidden) {
+        $row.removeClass('d-none');
+        $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+      } else {
+        $row.addClass('d-none');
+        $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+      }
+    });
+
     // Initial render
     renderSelectedTotal();
     syncCheckAll();
