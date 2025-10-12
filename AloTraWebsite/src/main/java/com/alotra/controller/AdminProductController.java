@@ -57,7 +57,8 @@ public class AdminProductController {
     public ResponseEntity<?> getVariantsJson(@PathVariable Integer id) {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) return ResponseEntity.notFound().build();
-        List<ProductVariant> list = variantRepository.findByProduct(productOpt.get());
+        // Eagerly fetch Size to avoid lazy loading issues outside view
+        List<ProductVariant> list = variantRepository.findByProductFetchingSize(productOpt.get());
         List<Map<String, Object>> data = new ArrayList<>();
         for (ProductVariant v : list) {
             Map<String, Object> m = new HashMap<>();
@@ -93,7 +94,8 @@ public class AdminProductController {
         model.addAttribute("currentPage", "products");
         model.addAttribute("product", p);
         model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
-        model.addAttribute("variants", variantRepository.findByProduct(p));
+        // Eagerly fetch size to prevent LazyInitializationException in template (v.size.name)
+        model.addAttribute("variants", variantRepository.findByProductFetchingSize(p));
         model.addAttribute("sizes", sizeRepository.findAll());
         return "admin/product-form";
     }

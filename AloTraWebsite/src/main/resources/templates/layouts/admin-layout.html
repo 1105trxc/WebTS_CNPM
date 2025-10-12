@@ -36,11 +36,8 @@
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'users'} ? 'active-custom' : ''">
 					<i class="fas fa-users me-2"></i> Người dùng
-				</a> <a th:href="@{/admin/branches}"
-					class="list-group-item list-group-item-action"
-					th:classappend="${currentPage == 'branches'} ? 'active-custom' : ''">
-					<i class="fas fa-store me-2"></i> Cửa hàng
-				</a> <a href="#productSubMenu" data-bs-toggle="collapse"
+				</a>
+				 <a href="#productSubMenu" data-bs-toggle="collapse"
 					class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
 					th:classappend="${#lists.contains({'products', 'categories', 'sizes', 'toppings'}, currentPage)} ? 'active-custom' : ''">
 					<div>
@@ -61,27 +58,17 @@
 							th:classappend="${currentPage == 'toppings'} ? 'active-submenu' : ''">Topping</a>
 					</div>
 				</div>
-				<a th:href="@{/admin/orders}"
-					class="list-group-item list-group-item-action"
-					th:classappend="${currentPage == 'orders'} ? 'active-custom' : ''">
-					<i class="fas fa-receipt me-2"></i> Đơn hàng
-				</a> <a th:href="@{/admin/promotions}"
+				 <a th:href="@{/admin/promotions}"
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'promotions'} ? 'active-custom' : ''">
 					<i class="fas fa-tags me-2"></i> Sự kiện khuyến mãi
-				</a> <a th:href="@{/admin/marketing}"
-					class="list-group-item list-group-item-action"
-					th:classappend="${currentPage == 'marketing'} ? 'active-custom' : ''">
-					<i class="fas fa-bullhorn me-2"></i> Marketing
-				</a> <a th:href="@{/admin/reviews}"
+				</a>
+				 <a th:href="@{/admin/reviews}"
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'reviews'} ? 'active-custom' : ''">
 					<i class="fas fa-star me-2"></i> Đánh giá
-				</a> <a th:href="@{/admin/settings}"
-					class="list-group-item list-group-item-action"
-					th:classappend="${currentPage == 'settings'} ? 'active-custom' : ''">
-					<i class="fas fa-cog me-2"></i> Cài đặt
-				</a> <a th:href="@{/admin/trash}"
+				</a>
+				 <a th:href="@{/admin/trash}"
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'trash'} ? 'active-custom' : ''">
 					<i class="fas fa-trash-alt me-2"></i> Thùng rác

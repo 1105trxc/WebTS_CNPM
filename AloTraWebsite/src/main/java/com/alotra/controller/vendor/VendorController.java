@@ -1,6 +1,7 @@
 package com.alotra.controller.vendor;
 
 import com.alotra.entity.DonHang;
+import com.alotra.entity.NhanVien;
 import com.alotra.repository.DonHangRepository;
 import com.alotra.service.CustomerOrderService;
 import com.alotra.service.VendorOrderService;
@@ -15,6 +16,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.alotra.security.NhanVienUserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Controller
 @RequestMapping("/vendor")
@@ -91,9 +95,18 @@ public class VendorController {
     }
 
     @PostMapping("/orders/{id}/advance")
-    public String advance(@PathVariable Integer id, @RequestParam(required = false) String from) {
+    public String advance(@PathVariable Integer id,
+                          @RequestParam(required = false) String from,
+                          @AuthenticationPrincipal NhanVienUserDetails current) {
         DonHang dh = donHangRepository.findById(id).orElse(null);
         if (dh != null) {
+            // Assign current employee if not yet assigned
+            if (current != null && dh.getEmployee() == null) {
+                NhanVien nv = new NhanVien();
+                nv.setId(current.getId());
+                dh.setEmployee(nv);
+                donHangRepository.save(dh);
+            }
             // Block advancing when unpaid bank transfer
             if ("ChuyenKhoan".equalsIgnoreCase(String.valueOf(dh.getPaymentMethod()))
                     && !"DaThanhToan".equals(dh.getPaymentStatus())) {
@@ -109,21 +122,39 @@ public class VendorController {
     }
 
     @PostMapping("/orders/{id}/cancel")
-    public String cancel(@PathVariable Integer id, @RequestParam(required = false) String from) {
+    public String cancel(@PathVariable Integer id,
+                         @RequestParam(required = false) String from,
+                         @AuthenticationPrincipal NhanVienUserDetails current) {
         DonHang dh = donHangRepository.findById(id).orElse(null);
         String currentSt = dh != null ? dh.getStatus() : null;
-        if (vendorOrderService.canCancel(currentSt)) {
-            vendorOrderService.updateStatus(id, "DaHuy");
+        if (dh != null) {
+            if (current != null && dh.getEmployee() == null) {
+                NhanVien nv = new NhanVien();
+                nv.setId(current.getId());
+                dh.setEmployee(nv);
+                donHangRepository.save(dh);
+            }
+            if (vendorOrderService.canCancel(currentSt)) {
+                vendorOrderService.updateStatus(id, "DaHuy");
+            }
         }
         return redirectFrom(id, from);
     }
 
     @PostMapping("/orders/{id}/mark-cash-paid")
-    public String markCashPaid(@PathVariable Integer id, @RequestParam(required = false) String from) {
+    public String markCashPaid(@PathVariable Integer id,
+                               @RequestParam(required = false) String from,
+                               @AuthenticationPrincipal NhanVienUserDetails current) {
         donHangRepository.findById(id).ifPresent(dh -> {
             if (!"DaThanhToan".equals(dh.getPaymentStatus())) {
                 dh.setPaymentStatus("DaThanhToan");
                 dh.setPaidAt(LocalDateTime.now());
+                // Assign employee if not yet assigned
+                if (current != null && dh.getEmployee() == null) {
+                    NhanVien nv = new NhanVien();
+                    nv.setId(current.getId());
+                    dh.setEmployee(nv);
+                }
                 donHangRepository.save(dh);
             }
         });
