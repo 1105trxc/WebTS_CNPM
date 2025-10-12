@@ -1,4 +1,4 @@
-package com.alotra.controller;
+package com.alotra.controller.admin;
 
 import com.alotra.entity.Category;
 import com.alotra.entity.Product;

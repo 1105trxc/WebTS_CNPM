@@ -1,4 +1,4 @@
-package com.alotra.controller;
+package com.alotra.controller.admin;
 
 import com.alotra.entity.Category;
 import com.alotra.entity.Topping;
@@ -162,32 +162,4 @@ public class AdminController {
         return "redirect:/admin/toppings";
     }
 
-    // --- Other admin pages ---
-    @GetMapping("/branches")
-    public String showBranches(Model model) {
-        model.addAttribute("pageTitle", "Cửa hàng");
-        model.addAttribute("currentPage", "branches");
-        return "admin/branches";
-    }
-
-    @GetMapping("/orders")
-    public String showOrders(Model model) {
-        model.addAttribute("pageTitle", "Đơn hàng");
-        model.addAttribute("currentPage", "orders");
-        return "admin/orders";
-    }
-
-    @GetMapping("/marketing")
-    public String showMarketing(Model model) {
-        model.addAttribute("pageTitle", "Marketing");
-        model.addAttribute("currentPage", "marketing");
-        return "admin/marketing";
-    }
-
-    @GetMapping("/settings")
-    public String showSettings(Model model) {
-        model.addAttribute("pageTitle", "Cài đặt");
-        model.addAttribute("currentPage", "settings");
-        return "admin/settings";
-    }
 }

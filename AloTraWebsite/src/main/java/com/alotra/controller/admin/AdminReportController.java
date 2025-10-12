@@ -1,4 +1,4 @@
-package com.alotra.controller;
+package com.alotra.controller.admin;
 
 import com.alotra.service.NhanVienService;
 import com.alotra.service.ShiftReportService;

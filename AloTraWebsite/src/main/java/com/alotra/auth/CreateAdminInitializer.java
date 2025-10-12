@@ -1,4 +1,4 @@
-package com.alotra.bootstrap;
+package com.alotra.auth;
 
 import com.alotra.entity.KhachHang;
 import com.alotra.repository.KhachHangRepository;

@@ -30,6 +30,7 @@
                     <div th:if="${param.activated}" class="alert alert-success" role="alert">
                         Tài khoản đã được kích hoạt. Bạn có thể đăng nhập.
                     </div>
+                    <div th:if="${msg}" class="alert alert-success" role="alert" th:text="${msg}"></div>
 
                     <form id="loginForm" method="post" th:action="@{/login}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />

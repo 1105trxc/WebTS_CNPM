@@ -1,4 +1,4 @@
-package com.alotra.controller;
+package com.alotra.controller.account;
 
 import com.alotra.entity.GioHangCT;
 import com.alotra.entity.KhachHang;
