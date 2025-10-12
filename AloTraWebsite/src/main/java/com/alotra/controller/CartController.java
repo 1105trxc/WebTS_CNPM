@@ -51,6 +51,7 @@ public class CartController {
         }
         model.addAttribute("itemVariantsMap", itemVariantsMap);
         model.addAttribute("total", cartService.calcTotal(items));
+        // Backward compatibility: map legacy ?msg= to template's "message"
         if (msg != null) model.addAttribute("message", msg);
         if (error != null) model.addAttribute("error", error);
         return "cart/cart";
@@ -69,7 +70,7 @@ public class CartController {
         }
         KhachHang kh = principal.getKhachHang();
         cartService.addItem(kh, productId, variantId, qty, null);
-        ra.addFlashAttribute("msg", "Đã thêm vào giỏ hàng");
+        ra.addFlashAttribute("message", "Đã thêm vào giỏ hàng");
         if ("home".equalsIgnoreCase(redirect)) {
             return "redirect:/";
         }
@@ -83,6 +84,8 @@ public class CartController {
                             RedirectAttributes ra) {
         try {
             cartService.updateQuantity(principal.getKhachHang(), itemId, qty);
+            // Optional: show success
+            ra.addFlashAttribute("message", "Đã cập nhật số lượng.");
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());
         }
@@ -95,6 +98,7 @@ public class CartController {
                          RedirectAttributes ra) {
         try {
             cartService.removeItem(principal.getKhachHang(), id);
+            ra.addFlashAttribute("message", "Đã xóa sản phẩm khỏi giỏ hàng.");
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());
         }
@@ -123,7 +127,7 @@ public class CartController {
                 }
             }
             cartService.updateToppings(principal.getKhachHang(), itemId, map);
-            ra.addFlashAttribute("msg", "Đã cập nhật topping.");
+            ra.addFlashAttribute("message", "Đã cập nhật topping.");
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());
         }
@@ -138,7 +142,7 @@ public class CartController {
                                 RedirectAttributes ra) {
         try {
             cartService.changeVariant(principal.getKhachHang(), itemId, newVariantId);
-            ra.addFlashAttribute("msg", "Đã cập nhật kích cỡ sản phẩm.");
+            ra.addFlashAttribute("message", "Đã cập nhật kích cỡ sản phẩm.");
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());
         }

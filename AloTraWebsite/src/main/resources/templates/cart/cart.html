@@ -143,7 +143,7 @@
             <span id="selectedTotal" class="fs-5 text-success">0 ₫</span>
         </div>
         <form id="checkoutForm" th:action="@{/checkout/confirm}" method="post" class="d-flex justify-content-between mt-2" onsubmit="return confirmCheckout()">
-            <a th:href="@{/}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
+            <a th:href="@{/products}" class="btn btn-outline-secondary">Tiếp tục mua sắm</a>
             <div>
                 <button class="btn btn-success" type="submit" th:disabled="${#lists.isEmpty(items)}">Đặt hàng</button>
             </div>

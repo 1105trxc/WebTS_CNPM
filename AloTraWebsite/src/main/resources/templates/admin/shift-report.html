@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(pageTitle='Báo cáo cuối ca', pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent" th:with="currentPage='reports'">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Báo cáo cuối ca</h4>
+        <div class="d-flex gap-2" th:if="${employee != null}">
+            <a th:href="@{/admin/reports/shift}" class="btn btn-sm btn-outline-secondary">Xem nhân viên khác</a>
+            <a class="btn btn-sm btn-outline-primary"
+               th:href="@{/admin/reports/shift/export(employeeId=${employee != null ? employee.id : null}, from=${fromStr}, to=${toStr})}">
+                <i class="fa fa-download me-1"></i> Xuất CSV
+            </a>
+            <button type="button" class="btn btn-sm btn-success" onclick="window.print()"><i class="fa fa-print me-1"></i> In báo cáo</button>
+        </div>
+    </div>
+
+    <form class="row g-2 align-items-end mb-3" method="get" th:action="@{/admin/reports/shift}">
+        <div class="col-md-4">
+            <label class="form-label">Nhân viên</label>
+            <select class="form-select" name="employeeId" required>
+                <option value="" th:selected="${employee == null}">-- Chọn nhân viên --</option>
+                <option th:each="e : ${employees}" th:value="${e.id}" th:text="${e.fullName + ' (' + e.username + ')'}"
+                        th:selected="${employee != null and employee.id == e.id}"></option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Từ</label>
+            <input class="form-control" type="datetime-local" name="from" th:value="${fromStr}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Đến</label>
+            <input class="form-control" type="datetime-local" name="to" th:value="${toStr}">
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-success w-100">Xem báo cáo</button>
+        </div>
+    </form>
+
+    <div th:if="${report != null}">
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+                <div class="card text-bg-primary h-100"><div class="card-body"><div class="fw-semibold">Tổng đơn</div><div class="display-6" th:text="${report.totalOrders}">0</div></div></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-bg-success h-100"><div class="card-body"><div class="fw-semibold">Đã giao</div><div class="display-6" th:text="${report.delivered}">0</div></div></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-bg-warning h-100"><div class="card-body"><div class="fw-semibold">Đang xử lý</div><div class="display-6" th:text="${report.inProgress}">0</div></div></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card text-bg-danger h-100"><div class="card-body"><div class="fw-semibold">Đã hủy</div><div class="display-6" th:text="${report.canceled}">0</div></div></div>
+            </div>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+                <div class="card h-100"><div class="card-body"><div class="fw-semibold">Đã thanh toán</div><div class="fs-4 text-success" th:text="${#numbers.formatDecimal(report.paidTotal,0,'COMMA',0,'POINT')} + ' ₫'">0 ₫</div></div></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card h-100"><div class="card-body"><div class="fw-semibold">Tiền mặt</div><div class="fs-5" th:text="${#numbers.formatDecimal(report.cashPaid,0,'COMMA',0,'POINT')} + ' ₫'">0 ₫</div></div></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card h-100"><div class="card-body"><div class="fw-semibold">Chuyển khoản</div><div class="fs-5" th:text="${#numbers.formatDecimal(report.bankPaid,0,'COMMA',0,'POINT')} + ' ₫'">0 ₫</div></div></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card h-100"><div class="card-body"><div class="fw-semibold">Đơn chưa thanh toán</div><div class="fs-4 text-danger" th:text="${report.unpaidCount}">0</div></div></div>
+            </div>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+                <div class="card h-100"><div class="card-body"><div class="fw-semibold">Số ly đã pha</div><div class="fs-4" th:text="${report.drinksMade}">0</div></div></div>
+            </div>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold">Phân bổ trạng thái</div>
+                    <div class="card-body">
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>Trạng thái</th><th class="text-end">Số đơn</th></tr></thead>
+                            <tbody>
+                            <tr th:each="s : ${report.statusCounts}"><td th:text="${s['status']} ?: '—'"></td><td class="text-end" th:text="${s['count']}"></td></tr>
+                            <tr th:if="${#lists.isEmpty(report.statusCounts)}"><td colspan="2" class="text-center text-muted">Không có dữ liệu.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                        <span>Danh sách đơn trong ca</span>
+                        <a th:href="@{/admin/reports/shift}" class="btn btn-sm btn-outline-secondary">Đổi nhân viên</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm align-middle mb-0">
+                                <thead><tr>
+                                    <th>#</th><th>Khách hàng</th><th>Thời gian</th><th>Trạng thái</th><th>Thanh toán</th><th class="text-end">Tổng</th>
+                                </tr></thead>
+                                <tbody>
+                                <tr th:each="o : ${report.orders}">
+                                    <td th:text="${o['id']}"></td>
+                                    <td><div th:text="${o['customerName']}"></div><div class="small text-muted" th:text="${o['customerPhone']}"></div></td>
+                                    <td th:text="${#temporals.format(o['createdAt'], 'HH:mm dd/MM')}"></td>
+                                    <td><span class="badge" th:classappend="${o['status']=='ChoXuLy'?'bg-warning':(o['status']=='DangPhaChe'?'bg-primary':(o['status']=='DangGiao'?'bg-info':(o['status']=='DaGiao'?'bg-success':'bg-secondary')))}" th:text="${o['status']}"></span></td>
+                                    <td><span class="badge" th:classappend="${o['paymentStatus']=='DaThanhToan'?'bg-success':'bg-secondary'}" th:text="${o['paymentMethod']}"></span></td>
+                                    <td class="text-end" th:text="${#numbers.formatDecimal(o['total'],0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(report.orders)}"><td colspan="6" class="text-center text-muted">Không có đơn nào.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

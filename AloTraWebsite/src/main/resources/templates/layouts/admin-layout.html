@@ -68,6 +68,11 @@
 					th:classappend="${currentPage == 'reviews'} ? 'active-custom' : ''">
 					<i class="fas fa-star me-2"></i> Đánh giá
 				</a>
+				 <a th:href="@{/admin/reports/shift}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'reports'} ? 'active-custom' : ''">
+					<i class="fas fa-file-alt me-2"></i> Báo cáo
+				</a>
 				 <a th:href="@{/admin/trash}"
 					class="list-group-item list-group-item-action"
 					th:classappend="${currentPage == 'trash'} ? 'active-custom' : ''">

@@ -23,7 +23,26 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        // Legacy-aware encoder: supports bcrypt and plaintext/noop without extra files
+        return new PasswordEncoder() {
+            private final BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
+            @Override public String encode(CharSequence rawPassword) { return bcrypt.encode(rawPassword); }
+            @Override public boolean matches(CharSequence rawPassword, String encodedPassword) {
+                if (encodedPassword == null) return false;
+                String stored = encodedPassword.trim();
+                String raw = rawPassword == null ? "" : rawPassword.toString();
+                if (stored.startsWith("{bcrypt}")) {
+                    return bcrypt.matches(raw, stored.substring("{bcrypt}".length()));
+                }
+                if (stored.startsWith("{noop}")) {
+                    return raw.equals(stored.substring("{noop}".length()));
+                }
+                if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
+                    return bcrypt.matches(raw, stored);
+                }
+                return raw.equals(stored); // legacy/plaintext
+            }
+        };
     }
 
     @Bean

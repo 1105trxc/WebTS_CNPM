@@ -23,6 +23,9 @@ public class NhanVienService {
     public List<NhanVien> findAll() { return repo.findAll(); }
     public Optional<NhanVien> findById(Integer id) { return repo.findById(id); }
 
+    // New: list active (not soft-deleted) employees
+    public List<NhanVien> findActive() { return repo.findByDeletedAtIsNull(); }
+
     public NhanVien saveHandlingPassword(NhanVien nv) {
         boolean isNew = nv.getId() == null;
         String pwd = nv.getPlainPassword();
