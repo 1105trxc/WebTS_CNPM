@@ -23,6 +23,8 @@
             .review-card { border:1px solid #eee; border-radius:8px; padding:12px; margin-bottom:12px; background:#fff; }
             .review-author { font-weight:600; }
             .review-date { color:#6c757d; font-size:.9rem; }
+            .admin-reply { background:#f8f9fa; border-left:3px solid #198754; padding:10px; border-radius:6px; margin-top:8px; }
+            .admin-reply .meta { color:#6c757d; font-size:.85rem; }
         </style>
     </th:block>
 </head>
@@ -185,6 +187,16 @@
                                 <span class="ms-2 small text-muted" th:text="${rv.stars} + ' / 5'"></span>
                             </div>
                             <div th:if="${rv.comment}" th:text="${rv.comment}"></div>
+
+                            <!-- Admin reply shown to customers -->
+                            <div class="admin-reply" th:if="${rv.adminReply}">
+                                <div class="meta mb-1">
+                                    <strong>Phản hồi của cửa hàng</strong>
+                                    <span th:if="${rv.adminRepliedBy}"> · <span th:text="${rv.adminRepliedBy}"></span></span>
+                                    <span th:if="${rv.adminRepliedAt}" th:text="${' · ' + #temporals.format(rv.adminRepliedAt, 'dd/MM/yyyy HH:mm')}"></span>
+                                </div>
+                                <div th:text="${rv.adminReply}"></div>
+                            </div>
                         </div>
                     </div>
                 </div>

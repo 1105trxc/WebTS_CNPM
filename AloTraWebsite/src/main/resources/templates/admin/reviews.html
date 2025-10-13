@@ -20,6 +20,7 @@
                         <th>Khách hàng</th>
                         <th>Số sao</th>
                         <th>Bình luận</th>
+                        <th>Phản hồi (Admin)</th>
                         <th>Thời gian</th>
                         <th class="text-end">Hành động</th>
                     </tr>
@@ -37,6 +38,22 @@
                         </td>
                         <td><span class="badge bg-success" th:text="${r.stars} + ' / 5'"></span></td>
                         <td th:text="${r.comment}"></td>
+                        <td style="min-width:260px">
+                            <div th:if="${r.adminReply}" class="mb-2">
+                                <div class="small text-muted">Trả lời bởi <strong th:text="${r.adminRepliedBy}">admin</strong>
+                                    <span th:if="${r.adminRepliedAt}" th:text="${' · ' + #temporals.format(r.adminRepliedAt, 'dd/MM/yyyy HH:mm')}"></span>
+                                </div>
+                                <div th:text="${r.adminReply}"></div>
+                            </div>
+                            <form class="d-flex gap-2" th:action="@{'/admin/reviews/' + ${r.id} + '/reply'}" method="post">
+                                <input type="text" name="reply" class="form-control form-control-sm" th:placeholder="${r.adminReply != null ? 'Cập nhật phản hồi' : 'Nhập phản hồi...'}" th:value="${r.adminReply}">
+                                <button class="btn btn-sm btn-outline-primary" type="submit">Gửi</button>
+                            </form>
+                            <form th:if="${r.adminReply}" class="mt-1" th:action="@{'/admin/reviews/' + ${r.id} + '/reply'}" method="post" onsubmit="return confirm('Xóa phản hồi hiện tại?');">
+                                <input type="hidden" name="reply" value="">
+                                <button class="btn btn-sm btn-outline-secondary" type="submit">Xóa phản hồi</button>
+                            </form>
+                        </td>
                         <td th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
                         <td class="text-end">
                             <form th:action="@{'/admin/reviews/' + ${r.id} + '/delete'}" method="post" onsubmit="return confirm('Xóa đánh giá này?');">
@@ -45,7 +62,7 @@
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(items)}">
-                        <td colspan="7" class="text-center">Chưa có đánh giá nào.</td>
+                        <td colspan="8" class="text-center">Chưa có đánh giá nào.</td>
                     </tr>
                     </tbody>
                 </table>

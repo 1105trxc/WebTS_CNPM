@@ -91,6 +91,16 @@
                                             <span class="badge bg-success" th:text="${reviewsByLine[it.id].stars} + ' / 5'"></span>
                                         </div>
                                         <div th:if="${reviewsByLine[it.id].comment}" class="text-muted">"<span th:text="${reviewsByLine[it.id].comment}"></span>"</div>
+                                        <!-- Admin reply shown below the user's review -->
+                                        <div class="mt-2 p-2 bg-light border rounded" th:if="${reviewsByLine[it.id].adminReply}">
+                                            <div class="small text-muted">
+                                                <strong>Phản hồi của cửa hàng</strong>
+                                                <span th:if="${reviewsByLine[it.id].adminRepliedBy}"> · <span th:text="${reviewsByLine[it.id].adminRepliedBy}"></span></span>
+                                                <span th:if="${reviewsByLine[it.id].adminRepliedAt}"
+                                                      th:text="${' · ' + #temporals.format(reviewsByLine[it.id].adminRepliedAt, 'dd/MM/yyyy HH:mm')}"></span>
+                                            </div>
+                                            <div th:text="${reviewsByLine[it.id].adminReply}"></div>
+                                        </div>
                                         <!-- Edit/Delete when allowed -->
                                         <div class="mt-2" th:if="${#maps.containsKey(reviewEditableByLine, it.id) and reviewEditableByLine[it.id]}">
                                             <form class="row g-2 align-items-center" th:action="@{'/account/reviews/' + ${reviewsByLine[it.id].id} + '/edit'}" method="post">

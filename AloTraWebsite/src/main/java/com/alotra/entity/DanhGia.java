@@ -29,6 +29,15 @@ public class DanhGia {
     @Column(name = "NgayDG", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "TraLoiAdmin")
+    private String adminReply;
+
+    @Column(name = "TraLoiLuc")
+    private LocalDateTime adminRepliedAt;
+
+    @Column(name = "TraLoiBoi")
+    private String adminRepliedBy;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public KhachHang getCustomer() { return customer; }
@@ -41,4 +50,10 @@ public class DanhGia {
     public void setComment(String comment) { this.comment = comment; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getAdminReply() { return adminReply; }
+    public void setAdminReply(String adminReply) { this.adminReply = adminReply; }
+    public LocalDateTime getAdminRepliedAt() { return adminRepliedAt; }
+    public void setAdminRepliedAt(LocalDateTime adminRepliedAt) { this.adminRepliedAt = adminRepliedAt; }
+    public String getAdminRepliedBy() { return adminRepliedBy; }
+    public void setAdminRepliedBy(String adminRepliedBy) { this.adminRepliedBy = adminRepliedBy; }
 }

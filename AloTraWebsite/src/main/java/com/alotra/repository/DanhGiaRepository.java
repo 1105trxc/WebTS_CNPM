@@ -37,7 +37,13 @@ public interface DanhGiaRepository extends JpaRepository<DanhGia, Integer> {
             "ORDER BY dg.createdAt DESC")
     List<DanhGia> findByProductIdOrderByCreatedAtDesc(@Param("productId") Integer productId);
 
-    // List newest reviews with product and user data for admin page
-    @Query(value = "SELECT dg FROM DanhGia dg ORDER BY dg.createdAt DESC")
+    // List newest reviews with product and user data for admin page (fetch joins to avoid N+1/lazy issues)
+    @Query("SELECT DISTINCT dg FROM DanhGia dg " +
+            "LEFT JOIN FETCH dg.customer c " +
+            "LEFT JOIN FETCH dg.orderLine ol " +
+            "LEFT JOIN FETCH ol.variant v " +
+            "LEFT JOIN FETCH v.product p " +
+            "LEFT JOIN FETCH v.size s " +
+            "ORDER BY dg.createdAt DESC")
     List<DanhGia> findAllOrderByCreatedAtDesc();
 }
