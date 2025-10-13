@@ -34,4 +34,7 @@ public class KhachHangService {
         if (kw != null && kw.isBlank()) kw = null;
         return khachHangRepository.search(kw, status);
     }
+
+    // New: hard delete (may fail due to FK constraints)
+    public void deleteById(Integer id) { khachHangRepository.deleteById(id); }
 }

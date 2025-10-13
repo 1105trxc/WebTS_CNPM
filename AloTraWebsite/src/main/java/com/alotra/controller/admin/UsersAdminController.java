@@ -5,6 +5,7 @@ import com.alotra.entity.NhanVien;
 import com.alotra.service.KhachHangService;
 import com.alotra.service.NhanVienService;
 import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -57,6 +58,69 @@ public class UsersAdminController {
         model.addAttribute("currentPage", "users");
         model.addAttribute("kh", kh);
         return "admin/users/customer-detail";
+    }
+
+    // === Customers: lock/unlock/delete ===
+    @PostMapping("/customers/{id}/lock")
+    public String lockCustomer(@PathVariable Integer id, RedirectAttributes ra) {
+        KhachHang kh = khService.findById(id);
+        if (kh == null) {
+            ra.addFlashAttribute("error", "Không tìm thấy khách hàng.");
+        } else if ("boss".equalsIgnoreCase(String.valueOf(kh.getUsername())) ||
+                   "boss@alotra.com".equalsIgnoreCase(String.valueOf(kh.getEmail()))) {
+            ra.addFlashAttribute("error", "Không thể khóa tài khoản quản trị hệ thống.");
+        } else {
+            kh.setStatus(0);
+            khService.save(kh);
+            ra.addFlashAttribute("msg", "Đã khóa tài khoản khách hàng.");
+        }
+        return "redirect:/admin/users?tab=customers";
+    }
+
+    @PostMapping("/customers/{id}/unlock")
+    public String unlockCustomer(@PathVariable Integer id, RedirectAttributes ra) {
+        KhachHang kh = khService.findById(id);
+        if (kh == null) {
+            ra.addFlashAttribute("error", "Không tìm thấy khách hàng.");
+        } else {
+            kh.setStatus(1);
+            khService.save(kh);
+            ra.addFlashAttribute("msg", "Đã mở khóa tài khoản khách hàng.");
+        }
+        return "redirect:/admin/users?tab=customers";
+    }
+
+    // Support both POST and GET delete patterns
+    @PostMapping("/customers/{id}/delete")
+    public String deleteCustomerPost(@PathVariable Integer id, RedirectAttributes ra) {
+        return deleteCustomerInternal(id, ra);
+    }
+
+    @GetMapping("/customers/delete/{id}")
+    public String deleteCustomerGet(@PathVariable Integer id, RedirectAttributes ra) {
+        return deleteCustomerInternal(id, ra);
+    }
+
+    private String deleteCustomerInternal(Integer id, RedirectAttributes ra) {
+        KhachHang kh = khService.findById(id);
+        if (kh == null) {
+            ra.addFlashAttribute("error", "Không tìm thấy khách hàng.");
+            return "redirect:/admin/users?tab=customers";
+        }
+        if ("boss".equalsIgnoreCase(String.valueOf(kh.getUsername())) ||
+            "boss@alotra.com".equalsIgnoreCase(String.valueOf(kh.getEmail()))) {
+            ra.addFlashAttribute("error", "Không thể xóa tài khoản quản trị hệ thống.");
+            return "redirect:/admin/users?tab=customers";
+        }
+        try {
+            khService.deleteById(id);
+            ra.addFlashAttribute("msg", "Đã xóa tài khoản khách hàng.");
+        } catch (DataIntegrityViolationException ex) {
+            ra.addFlashAttribute("error", "Không thể xóa vì tài khoản đã phát sinh dữ liệu. Vui lòng khóa thay vì xóa.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("error", "Không thể xóa: " + ex.getMessage());
+        }
+        return "redirect:/admin/users?tab=customers";
     }
 
     @GetMapping("/employees/new")

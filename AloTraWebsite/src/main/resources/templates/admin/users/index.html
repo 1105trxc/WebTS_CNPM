@@ -57,8 +57,17 @@
                         <td>
                             <span class="badge" th:text="${c.status==1?'Hoạt động':'Khóa'}" th:classappend="${c.status==1?'bg-success':'bg-secondary'}"></span>
                         </td>
-                        <td class="text-end">
+                        <td class="text-end d-flex gap-1 justify-content-end">
                             <a th:href="@{'/admin/users/customers/' + ${c.id}}" class="btn btn-sm btn-outline-secondary">Xem</a>
+                            <form th:if="${c.status == 1}" th:action="@{'/admin/users/customers/' + ${c.id} + '/lock'}" method="post" onsubmit="return confirm('Khóa tài khoản khách hàng này?');">
+                                <button type="submit" class="btn btn-sm btn-outline-warning">Khóa</button>
+                            </form>
+                            <form th:if="${c.status != 1}" th:action="@{'/admin/users/customers/' + ${c.id} + '/unlock'}" method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-success">Mở khóa</button>
+                            </form>
+                            <form th:action="@{'/admin/users/customers/' + ${c.id} + '/delete'}" method="post" onsubmit="return confirm('Xóa vĩnh viễn tài khoản này? Hành động không thể hoàn tác!');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                            </form>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(customers)}"><td colspan="7" class="text-center">Chưa có khách hàng</td></tr>
