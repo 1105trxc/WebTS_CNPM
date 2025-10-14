@@ -2,6 +2,7 @@ package com.alotra.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
@@ -36,6 +37,10 @@ public class SuKienKhuyenMai {
     @Column(name = "LuotXem")
     private Integer views;
 
+    // New: soft delete timestamp (null = active)
+    @Column(name = "DeletedAt")
+    private LocalDateTime deletedAt;
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -59,4 +64,7 @@ public class SuKienKhuyenMai {
 
     public Integer getViews() { return views; }
     public void setViews(Integer views) { this.views = views; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

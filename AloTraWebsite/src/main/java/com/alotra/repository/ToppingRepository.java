@@ -8,4 +8,5 @@ import java.util.List;
 public interface ToppingRepository extends JpaRepository<Topping, Integer> {
     List<Topping> findByDeletedAtIsNull();
     List<Topping> findByDeletedAtIsNotNull();
+    Topping findByNameIgnoreCaseAndDeletedAtIsNull(String name);
 }

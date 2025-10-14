@@ -24,6 +24,7 @@ public class PromotionService {
     public List<SuKienKhuyenMai> findAll() { return promotionRepo.findAll(); }
     public Optional<SuKienKhuyenMai> findById(Integer id) { return promotionRepo.findById(id); }
     public SuKienKhuyenMai save(SuKienKhuyenMai p) { return promotionRepo.save(p); }
+    public List<SuKienKhuyenMai> findActive() { return promotionRepo.findByDeletedAtIsNull(); }
 
     @Transactional
     public void deleteById(Integer id) {

@@ -14,18 +14,35 @@
                 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
                 <div class="card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                             <h5 class="card-title mb-0">Lịch sử đơn hàng</h5>
-                            <form class="d-flex gap-2" method="get" th:action="@{/account/orders}">
-                                <select class="form-select" name="status">
-                                    <option value="" th:selected="${status == null || status == ''}">Tất cả trạng thái</option>
-                                    <option value="ChoXuLy" th:selected="${status == 'ChoXuLy'}">Chờ xử lý</option>
-                                    <option value="DangPhaChe" th:selected="${status == 'DangPhaChe'}">Đang pha chế</option>
-                                    <option value="DangGiao" th:selected="${status == 'DangGiao'}">Đang giao</option>
-                                    <option value="DaGiao" th:selected="${status == 'DaGiao'}">Đã giao</option>
-                                    <option value="DaHuy" th:selected="${status == 'DaHuy'}">Đã hủy</option>
-                                </select>
-                                <button class="btn btn-outline-primary" type="submit">Lọc</button>
+                            <form class="row g-2 align-items-end" method="get" th:action="@{/account/orders}">
+                                <div class="col-auto">
+                                    <label class="form-label mb-0 small">Trạng thái</label>
+                                    <select class="form-select" name="status">
+                                        <option value="" th:selected="${status == null || status == ''}">Tất cả</option>
+                                        <option value="ChoXuLy" th:selected="${status == 'ChoXuLy'}">Chờ xử lý</option>
+                                        <option value="DangPhaChe" th:selected="${status == 'DangPhaChe'}">Đang pha chế</option>
+                                        <option value="DangGiao" th:selected="${status == 'DangGiao'}">Đang giao</option>
+                                        <option value="DaGiao" th:selected="${status == 'DaGiao'}">Đã giao</option>
+                                        <option value="DaHuy" th:selected="${status == 'DaHuy'}">Đã hủy</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label mb-0 small">Mã đơn</label>
+                                    <input type="text" class="form-control" name="code" placeholder="#" th:value="${code}">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label mb-0 small">Từ ngày</label>
+                                    <input type="date" class="form-control" name="from" th:value="${from}">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label mb-0 small">Đến ngày</label>
+                                    <input type="date" class="form-control" name="to" th:value="${to}">
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-outline-primary" type="submit">Lọc</button>
+                                </div>
                             </form>
                         </div>
 

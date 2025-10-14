@@ -62,4 +62,17 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
             "ORDER BY sp.MaSP DESC", nativeQuery = true)
     List<BestSellerProjection> searchByKeywordNative(@Param("kw") String keyword);
+
+    // New: find active product by name (case-insensitive) for duplicate check
+    Product findByNameIgnoreCaseAndDeletedAtIsNull(String name);
+
+    // === Admin: search with optional filters (keyword/category/status) among non-deleted products ===
+    @Query("SELECT p FROM Product p WHERE p.deletedAt IS NULL " +
+            "AND (:kw IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :kw, '%'))) " +
+            "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
+            "AND (:status IS NULL OR p.status = :status) " +
+            "ORDER BY p.id DESC")
+    List<Product> adminSearch(@Param("kw") String kw,
+                              @Param("categoryId") Integer categoryId,
+                              @Param("status") Integer status);
 }

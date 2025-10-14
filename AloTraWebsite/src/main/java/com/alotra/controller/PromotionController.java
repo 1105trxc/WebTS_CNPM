@@ -25,7 +25,7 @@ public class PromotionController {
 
     @GetMapping
     public String list(Model model) {
-        List<SuKienKhuyenMai> items = promoRepo.findTop8ByStatusOrderByStartDateDesc(1);
+        List<SuKienKhuyenMai> items = promoRepo.findTop8ByStatusAndDeletedAtIsNullOrderByStartDateDesc(1);
         model.addAttribute("pageTitle", "Tin tức & Khuyến mãi");
         model.addAttribute("items", items);
         return "promotions/list";

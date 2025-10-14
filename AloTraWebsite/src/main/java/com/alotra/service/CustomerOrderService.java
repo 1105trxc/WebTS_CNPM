@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.ZoneId;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -18,7 +19,7 @@ public class CustomerOrderService {
         this.jdbc = jdbc;
     }
 
-    // List orders for a specific customer
+    // List orders for a specific customer (legacy)
     public List<OrderRow> listOrdersByCustomer(Integer customerId, String status) {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan,\n");
@@ -29,6 +30,35 @@ public class CustomerOrderService {
         if (status != null && !status.isBlank()) {
             sb.append(" AND dh.TrangThaiDonHang = ?");
             params.add(status);
+        }
+        sb.append(" ORDER BY dh.MaDH DESC");
+        return jdbc.query(sb.toString(), params.toArray(), ORDER_ROW_MAPPER);
+    }
+
+    // New: List orders for a specific customer with optional status, exact code and date range
+    public List<OrderRow> listOrdersByCustomer(Integer customerId, String status, Integer orderId,
+                                               LocalDateTime from, LocalDateTime to) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan,\n");
+        sb.append(" dh.PhuongThucNhanHang, dh.TenNguoiNhan, dh.SDTNguoiNhan, dh.DiaChiNhanHang\n");
+        sb.append("FROM DonHang dh WHERE dh.MaKH = ? ");
+        java.util.List<Object> params = new java.util.ArrayList<>();
+        params.add(customerId);
+        if (status != null && !status.isBlank()) {
+            sb.append(" AND dh.TrangThaiDonHang = ?");
+            params.add(status);
+        }
+        if (orderId != null) {
+            sb.append(" AND dh.MaDH = ?");
+            params.add(orderId);
+        }
+        if (from != null) {
+            sb.append(" AND dh.NgayLap >= ?");
+            params.add(java.sql.Timestamp.valueOf(from));
+        }
+        if (to != null) {
+            sb.append(" AND dh.NgayLap <= ?");
+            params.add(java.sql.Timestamp.valueOf(to));
         }
         sb.append(" ORDER BY dh.MaDH DESC");
         return jdbc.query(sb.toString(), params.toArray(), ORDER_ROW_MAPPER);

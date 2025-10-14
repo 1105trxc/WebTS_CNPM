@@ -59,8 +59,8 @@ public class HomeController {
         // Đưa danh sách vào model với tên là "bestSellers" để HTML có thể dùng
         model.addAttribute("bestSellers", bestSellers);
 
-        // Tin tức & Khuyến mãi: lấy tối đa 8 sự kiện đang hoạt động
-        List<SuKienKhuyenMai> promos = promoRepo.findTop8ByStatusOrderByStartDateDesc(1);
+        // Tin tức & Khuyến mãi: lấy tối đa 8 sự kiện đang hoạt động (không bị xóa)
+        List<SuKienKhuyenMai> promos = promoRepo.findTop8ByStatusAndDeletedAtIsNullOrderByStartDateDesc(1);
         List<PromotionCard> cards = new ArrayList<>();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         for (SuKienKhuyenMai p : promos) {

@@ -11,17 +11,19 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
 @RequestMapping("/admin/promotions")
-public class PromotionAdminController {
+public class AdminPromotionController {
     private final PromotionService promotionService;
     private final CloudinaryService cloudinaryService;
 
-    public PromotionAdminController(PromotionService promotionService, CloudinaryService cloudinaryService) {
+    public AdminPromotionController(PromotionService promotionService, CloudinaryService cloudinaryService) {
         this.promotionService = promotionService;
         this.cloudinaryService = cloudinaryService;
     }
@@ -30,7 +32,8 @@ public class PromotionAdminController {
     public String list(Model model) {
         model.addAttribute("pageTitle", "Sự kiện khuyến mãi");
         model.addAttribute("currentPage", "promotions");
-        model.addAttribute("items", promotionService.findAll());
+        // Show only active (not in trash)
+        model.addAttribute("items", promotionService.findActive());
         return "admin/promotion-list";
     }
 
@@ -55,7 +58,8 @@ public class PromotionAdminController {
     public String save(@ModelAttribute("item") @Valid SuKienKhuyenMai item,
                        BindingResult result,
                        @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
-                       Model model) {
+                       Model model,
+                       RedirectAttributes ra) {
         // basic date validation
         LocalDate s = item.getStartDate();
         LocalDate e = item.getEndDate();
@@ -81,13 +85,29 @@ public class PromotionAdminController {
             model.addAttribute("currentPage", "promotions");
             return "admin/promotion-form";
         }
+        boolean isNew = (item.getId() == null);
         promotionService.save(item);
+        ra.addFlashAttribute("message", isNew ? "Đã thêm sự kiện khuyến mãi." : "Đã cập nhật sự kiện khuyến mãi.");
         return "redirect:/admin/promotions";
     }
 
     @GetMapping("/delete/{id}")
-    public String delete(@PathVariable Integer id) {
-        promotionService.deleteById(id);
+    public String delete(@PathVariable Integer id, RedirectAttributes ra) {
+        // Prevent delete when products are still applied
+        var promoOpt = promotionService.findById(id);
+        if (promoOpt.isEmpty()) {
+            ra.addFlashAttribute("error", "Không tìm thấy sự kiện khuyến mãi.");
+            return "redirect:/admin/promotions";
+        }
+        SuKienKhuyenMai p = promoOpt.get();
+        if (promotionService.listAssignments(id).size() > 0) {
+            ra.addFlashAttribute("error", "Sự kiện đang áp dụng sản phẩm, không thể xóa. Vui lòng gỡ áp dụng trước.");
+            return "redirect:/admin/promotions";
+        }
+        // Soft-delete: move to trash
+        p.setDeletedAt(java.time.LocalDateTime.now());
+        promotionService.save(p);
+        ra.addFlashAttribute("message", "Đã chuyển sự kiện vào thùng rác.");
         return "redirect:/admin/promotions";
     }
 
@@ -108,14 +128,21 @@ public class PromotionAdminController {
     @PostMapping("/{id}/products")
     public String addProduct(@PathVariable Integer id,
                              @RequestParam("productId") Integer productId,
-                             @RequestParam("percent") Integer percent) {
-        promotionService.assignProduct(id, productId, percent);
+                             @RequestParam("percent") Integer percent,
+                             RedirectAttributes ra) {
+        try {
+            promotionService.assignProduct(id, productId, percent);
+            ra.addFlashAttribute("message", "Đã áp dụng sản phẩm vào sự kiện.");
+        } catch (IllegalArgumentException ex) {
+            ra.addFlashAttribute("error", ex.getMessage());
+        }
         return "redirect:/admin/promotions/" + id + "/products";
     }
 
     @GetMapping("/{id}/products/{productId}/remove")
-    public String removeProduct(@PathVariable Integer id, @PathVariable Integer productId) {
+    public String removeProduct(@PathVariable Integer id, @PathVariable Integer productId, RedirectAttributes ra) {
         promotionService.unassignProduct(id, productId);
+        ra.addFlashAttribute("message", "Đã gỡ sản phẩm khỏi sự kiện.");
         return "redirect:/admin/promotions/" + id + "/products";
     }
 }

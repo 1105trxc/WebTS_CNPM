@@ -23,12 +23,12 @@
     <!-- Page-level extra CSS (optional, injected by child pages) -->
     <th:block th:replace="${additionalCss} ?: ~{}"></th:block>
 </head>
-<body class="d-flex flex-column h-100">
+<body class="d-flex flex-column min-vh-100">
     <!-- Site Header -->
     <header th:replace="~{fragments/header :: header}"></header>
 
     <!-- Main Content -->
-    <main class="flex-shrink-0">
+    <main class="flex-grow-1">
         <div class="container">
             <!-- Inject page-specific content here -->
             <div th:replace="${content}"></div>

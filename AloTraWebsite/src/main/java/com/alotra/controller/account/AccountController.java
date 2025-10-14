@@ -15,10 +15,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.format.annotation.DateTimeFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Controller
 @RequestMapping("/account") // Tất cả URL sẽ có tiền tố /account
@@ -104,11 +107,31 @@ public class AccountController {
     @GetMapping("/orders")
     public String showOrdersPage(@AuthenticationPrincipal KhachHangUserDetails current,
                                  @RequestParam(value = "status", required = false) String status,
+                                 @RequestParam(value = "code", required = false) String code,
+                                 @RequestParam(value = "from", required = false)
+                                 @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate from,
+                                 @RequestParam(value = "to", required = false)
+                                 @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate to,
                                  Model model) {
         model.addAttribute("pageTitle", "Lịch Sử Đơn Hàng");
-        List<CustomerOrderService.OrderRow> list = orderService.listOrdersByCustomer(current.getId(), status);
+        Integer orderId = null;
+        if (code != null && !code.isBlank()) {
+            try { orderId = Integer.valueOf(code.trim()); } catch (NumberFormatException ignored) {}
+        }
+        LocalDateTime fromDt = null, toDt = null;
+        if (from != null || to != null) {
+            fromDt = (from != null) ? from.atStartOfDay() : null;
+            toDt = (to != null) ? to.atTime(23,59,59) : LocalDateTime.now();
+            if (fromDt != null && toDt != null && toDt.isBefore(fromDt)) {
+                LocalDateTime tmp = fromDt; fromDt = toDt; toDt = tmp;
+            }
+        }
+        List<CustomerOrderService.OrderRow> list = orderService.listOrdersByCustomer(current.getId(), status, orderId, fromDt, toDt);
         model.addAttribute("items", list);
         model.addAttribute("status", status);
+        model.addAttribute("code", code);
+        model.addAttribute("from", from != null ? from.toString() : "");
+        model.addAttribute("to", to != null ? to.toString() : "");
         return "account/orders"; // Trỏ đến file /templates/account/orders.html
     }
 

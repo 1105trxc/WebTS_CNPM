@@ -4,10 +4,13 @@ import com.alotra.entity.Category;
 import com.alotra.entity.NhanVien;
 import com.alotra.entity.Product;
 import com.alotra.entity.Topping;
+import com.alotra.entity.SuKienKhuyenMai;
 import com.alotra.repository.CategoryRepository;
 import com.alotra.repository.NhanVienRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ToppingRepository;
+import com.alotra.repository.SuKienKhuyenMaiRepository;
+import com.alotra.repository.KhuyenMaiSanPhamRepository;
 import com.alotra.service.NhanVienService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
@@ -25,17 +28,23 @@ public class AdminTrashController {
     private final ToppingRepository toppingRepo;
     private final NhanVienRepository nhanVienRepo;
     private final NhanVienService nhanVienService;
+    private final SuKienKhuyenMaiRepository promotionRepo;
+    private final KhuyenMaiSanPhamRepository promoLinkRepo;
 
     public AdminTrashController(CategoryRepository categoryRepo,
                                 ProductRepository productRepo,
                                 ToppingRepository toppingRepo,
                                 NhanVienRepository nhanVienRepo,
-                                NhanVienService nhanVienService) {
+                                NhanVienService nhanVienService,
+                                SuKienKhuyenMaiRepository promotionRepo,
+                                KhuyenMaiSanPhamRepository promoLinkRepo) {
         this.categoryRepo = categoryRepo;
         this.productRepo = productRepo;
         this.toppingRepo = toppingRepo;
         this.nhanVienRepo = nhanVienRepo;
         this.nhanVienService = nhanVienService;
+        this.promotionRepo = promotionRepo;
+        this.promoLinkRepo = promoLinkRepo;
     }
 
     @GetMapping
@@ -46,6 +55,7 @@ public class AdminTrashController {
         model.addAttribute("products", productRepo.findByDeletedAtIsNotNull());
         model.addAttribute("toppings", toppingRepo.findByDeletedAtIsNotNull());
         model.addAttribute("employees", nhanVienRepo.findByDeletedAtIsNotNull());
+        model.addAttribute("promotions", promotionRepo.findByDeletedAtIsNotNull());
         return "admin/trash";
     }
 
@@ -75,6 +85,13 @@ public class AdminTrashController {
     public String restoreEmployee(@PathVariable Integer id, RedirectAttributes ra) {
         nhanVienService.restoreFromTrash(id);
         ra.addFlashAttribute("message", "Đã khôi phục nhân viên.");
+        return "redirect:/admin/trash";
+    }
+
+    @GetMapping("/promotions/{id}/restore")
+    public String restorePromotion(@PathVariable Integer id, RedirectAttributes ra) {
+        promotionRepo.findById(id).ifPresent(p -> { p.setDeletedAt(null); promotionRepo.save(p); });
+        ra.addFlashAttribute("message", "Đã khôi phục sự kiện khuyến mãi.");
         return "redirect:/admin/trash";
     }
 
@@ -119,6 +136,28 @@ public class AdminTrashController {
             ra.addFlashAttribute("message", "Đã xóa vĩnh viễn nhân viên.");
         } catch (DataIntegrityViolationException ex) {
             ra.addFlashAttribute("error", "Không thể xóa vì nhân viên đã tham gia xử lý đơn hàng.");
+        }
+        return "redirect:/admin/trash";
+    }
+
+    @GetMapping("/promotions/{id}/delete")
+    public String hardDeletePromotion(@PathVariable Integer id, RedirectAttributes ra) {
+        var opt = promotionRepo.findById(id);
+        if (opt.isEmpty()) {
+            ra.addFlashAttribute("error", "Không tìm thấy sự kiện khuyến mãi.");
+            return "redirect:/admin/trash";
+        }
+        SuKienKhuyenMai promo = opt.get();
+        // Block hard delete when still applied to products
+        if (!promoLinkRepo.findByPromotion(promo).isEmpty()) {
+            ra.addFlashAttribute("error", "Sự kiện đang áp dụng sản phẩm, không thể xóa.");
+            return "redirect:/admin/trash";
+        }
+        try {
+            promotionRepo.deleteById(id);
+            ra.addFlashAttribute("message", "Đã xóa vĩnh viễn sự kiện khuyến mãi.");
+        } catch (DataIntegrityViolationException ex) {
+            ra.addFlashAttribute("error", "Không thể xóa vì còn dữ liệu tham chiếu (áp dụng sản phẩm/đơn hàng).");
         }
         return "redirect:/admin/trash";
     }

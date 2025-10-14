@@ -43,11 +43,21 @@ public class AdminProductController {
     }
 
     @GetMapping
-    public String list(Model model) {
-        List<Product> items = productRepository.findByDeletedAtIsNull();
+    public String list(Model model,
+                       @RequestParam(value = "kw", required = false) String kw,
+                       @RequestParam(value = "categoryId", required = false) Integer categoryId,
+                       @RequestParam(value = "status", required = false) Integer status) {
+        // Normalize inputs
+        String keyword = (kw != null && !kw.isBlank()) ? kw.trim() : null;
+        List<Product> items = productRepository.adminSearch(keyword, categoryId, status);
         model.addAttribute("pageTitle", "Sản phẩm");
         model.addAttribute("currentPage", "products");
         model.addAttribute("items", items);
+        // Filters
+        model.addAttribute("kw", kw);
+        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("status", status);
+        model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
         return "admin/products";
     }
 
@@ -109,6 +119,18 @@ public class AdminProductController {
                        @RequestParam(value = "variantPrice", required = false) List<BigDecimal> variantPrices,
                        @RequestParam(value = "variantStatus", required = false) List<Integer> variantStatuses,
                        RedirectAttributes ra) {
+        // Unique name guard (active products only, case-insensitive)
+        String name = product.getName() != null ? product.getName().trim() : null;
+        product.setName(name);
+        if (name == null || name.isBlank()) {
+            ra.addFlashAttribute("error", "Tên sản phẩm không được để trống.");
+            return product.getId() == null ? "redirect:/admin/products/add" : ("redirect:/admin/products/edit/" + product.getId());
+        }
+        var dup = productRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
+        if (dup != null && (product.getId() == null || !dup.getId().equals(product.getId()))) {
+            ra.addFlashAttribute("error", "Tên sản phẩm đã tồn tại.");
+            return product.getId() == null ? "redirect:/admin/products/add" : ("redirect:/admin/products/edit/" + product.getId());
+        }
         // attach category
         Category cat = new Category();
         cat.setId(categoryId);
@@ -137,7 +159,7 @@ public class AdminProductController {
             for (int i = 0; i < limit; i++) {
                 Integer sizeId = variantSizeIds.get(i);
                 BigDecimal price = (variantPrices != null && i < variantPrices.size()) ? variantPrices.get(i) : null;
-                Integer status = (variantStatuses != null && i < variantStatuses.size()) ? variantStatuses.get(i) : 1;
+                Integer statusVal = (variantStatuses != null && i < variantStatuses.size()) ? variantStatuses.get(i) : 1;
                 if (sizeId == null || price == null) continue;
                 if (price.signum() < 0) continue; // skip negative
                 if (!seenSizeIds.add(sizeId)) continue; // skip duplicate rows
@@ -147,7 +169,7 @@ public class AdminProductController {
                 sz.setId(sizeId);
                 v.setSize(sz);
                 v.setPrice(price);
-                v.setStatus(status != null ? status : 1);
+                v.setStatus(statusVal != null ? statusVal : 1);
                 variantRepository.save(v);
             }
         }

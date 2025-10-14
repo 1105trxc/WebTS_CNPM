@@ -82,6 +82,17 @@ public class AdminController {
 
     @PostMapping("/categories/save")
     public String saveCategory(@ModelAttribute Category category, RedirectAttributes ra) {
+        String name = category.getName() != null ? category.getName().trim() : null;
+        category.setName(name);
+        if (name == null || name.isBlank()) {
+            ra.addFlashAttribute("error", "Tên danh mục không được để trống.");
+            return category.getId() == null ? "redirect:/admin/categories/add" : ("redirect:/admin/categories/edit/" + category.getId());
+        }
+        Category dup = categoryRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
+        if (dup != null && (category.getId() == null || !dup.getId().equals(category.getId()))) {
+            ra.addFlashAttribute("error", "Tên danh mục đã tồn tại.");
+            return category.getId() == null ? "redirect:/admin/categories/add" : ("redirect:/admin/categories/edit/" + category.getId());
+        }
         categoryRepository.save(category);
         ra.addFlashAttribute("message", "Lưu danh mục thành công.");
         return "redirect:/admin/categories";
@@ -139,6 +150,17 @@ public class AdminController {
                               @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
                               RedirectAttributes ra) {
         try {
+            String name = topping.getName() != null ? topping.getName().trim() : null;
+            topping.setName(name);
+            if (name == null || name.isBlank()) {
+                ra.addFlashAttribute("error", "Tên topping không được để trống.");
+                return topping.getId() == null ? "redirect:/admin/toppings/add" : ("redirect:/admin/toppings/edit/" + topping.getId());
+            }
+            Topping dup = toppingRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
+            if (dup != null && (topping.getId() == null || !dup.getId().equals(topping.getId()))) {
+                ra.addFlashAttribute("error", "Tên topping đã tồn tại.");
+                return topping.getId() == null ? "redirect:/admin/toppings/add" : ("redirect:/admin/toppings/edit/" + topping.getId());
+            }
             if (imageFile != null && !imageFile.isEmpty()) {
                 String url = cloudinaryService.uploadFile(imageFile);
                 topping.setImageUrl(url);

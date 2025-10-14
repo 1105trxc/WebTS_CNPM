@@ -80,6 +80,29 @@
             </tbody>
         </table>
     </div>
+
+    <!-- New: Promotions (Sự kiện khuyến mãi) -->
+    <h5 class="mb-3">Sự kiện khuyến mãi đã xóa</h5>
+    <div class="table-responsive mb-4">
+        <table class="table table-striped table-hover align-middle">
+            <thead><tr><th>#</th><th>Tên sự kiện</th><th>Thời gian</th><th class="text-end">Hành động</th></tr></thead>
+            <tbody>
+            <tr th:each="pr : ${promotions}">
+                <td th:text="${pr.id}"></td>
+                <td>
+                    <strong th:text="${pr.name}"></strong>
+                    <div class="small text-muted" th:text="${pr.description}"></div>
+                </td>
+                <td th:text="${#temporals.format(pr.startDate, 'dd/MM/yyyy')} + ' - ' + ${#temporals.format(pr.endDate, 'dd/MM/yyyy')}"></td>
+                <td class="text-end">
+                    <a th:href="@{'/admin/trash/promotions/' + ${pr.id} + '/restore'}" class="btn btn-sm btn-outline-primary">Khôi phục</a>
+                    <a th:href="@{'/admin/trash/promotions/' + ${pr.id} + '/delete'}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa vĩnh viễn sự kiện này? Có thể không xóa được nếu đang được tham chiếu.')">Xóa vĩnh viễn</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(promotions)}"><td colspan="4" class="text-center">Không có bản ghi.</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 </body>
 </html>
