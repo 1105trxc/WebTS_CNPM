@@ -1,4 +1,4 @@
-package com.alotra.controller.account;
+package com.alotra.controller;
 
 import com.alotra.entity.*;
 import com.alotra.repository.ProductRepository;

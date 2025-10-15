@@ -51,9 +51,9 @@
 
                             <!-- Add to cart: GET link to /cart/add with productId; disabled when price missing -->
                             <a th:if="${product.price != null}"
-                               th:href="@{/cart/add(productId=${product.id})}"
+                               th:href="@{/products/{id}(id=${product.id})}"
                                class="btn btn-add-to-cart mt-2"
-                               th:attr="data-product-id=${product.id},data-go='cart'">
+                               >
                                 <i class="fas fa-shopping-cart"></i> Đặt mua
                             </a>
                             <button th:if="${product.price == null}"

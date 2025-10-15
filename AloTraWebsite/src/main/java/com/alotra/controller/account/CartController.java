@@ -57,25 +57,25 @@ public class CartController {
         return "cart/cart";
     }
 
-    // Add by productId or variantId
-    @GetMapping("/add")
-    public String addFromProduct(@AuthenticationPrincipal KhachHangUserDetails principal,
-                                 @RequestParam(value = "productId", required = false) Integer productId,
-                                 @RequestParam(value = "variantId", required = false) Integer variantId,
-                                 @RequestParam(value = "qty", required = false, defaultValue = "1") Integer qty,
-                                 @RequestParam(value = "redirect", required = false, defaultValue = "cart") String redirect,
-                                 RedirectAttributes ra) {
-        if (principal == null) {
-            return "redirect:/login";
-        }
-        KhachHang kh = principal.getKhachHang();
-        cartService.addItem(kh, productId, variantId, qty, null);
-        ra.addFlashAttribute("message", "Đã thêm vào giỏ hàng");
-        if ("home".equalsIgnoreCase(redirect)) {
-            return "redirect:/";
-        }
-        return "redirect:/cart";
-    }
+//    // Add by productId or variantId. Dùng API bên CartApi Controller thay thế
+//    @GetMapping("/add")
+//    public String addFromProduct(@AuthenticationPrincipal KhachHangUserDetails principal,
+//                                 @RequestParam(value = "productId", required = false) Integer productId,
+//                                 @RequestParam(value = "variantId", required = false) Integer variantId,
+//                                 @RequestParam(value = "qty", required = false, defaultValue = "1") Integer qty,
+//                                 @RequestParam(value = "redirect", required = false, defaultValue = "cart") String redirect,
+//                                 RedirectAttributes ra) {
+//        if (principal == null) {
+//            return "redirect:/login";
+//        }
+//        KhachHang kh = principal.getKhachHang();
+//        cartService.addItem(kh, productId, variantId, qty, null);
+//        ra.addFlashAttribute("message", "Đã thêm vào giỏ hàng");
+//        if ("home".equalsIgnoreCase(redirect)) {
+//            return "redirect:/";
+//        }
+//        return "redirect:/cart";
+//    }
 
     @PostMapping("/update")
     public String updateQty(@AuthenticationPrincipal KhachHangUserDetails principal,
@@ -147,25 +147,5 @@ public class CartController {
             ra.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/cart";
-    }
-
-    @PostMapping("/checkout")
-    public String checkout(@AuthenticationPrincipal KhachHangUserDetails principal,
-                           @RequestParam(value = "itemIds", required = false) List<Integer> itemIds,
-                           @RequestParam(value = "paymentMethod", required = false, defaultValue = "TienMat") String paymentMethod,
-                           RedirectAttributes ra) {
-        try {
-            var order = cartService.checkout(principal.getKhachHang(), itemIds, paymentMethod);
-            if ("ChuyenKhoan".equalsIgnoreCase(paymentMethod)) {
-                // Redirect to payment page with QR for bank transfer
-                return "redirect:/payment/" + order.getId();
-            }
-            // Cash-on-delivery: placed immediately, pay at handover
-            ra.addFlashAttribute("msg", "Đặt hàng thành công. Mã đơn: " + order.getId());
-            return "redirect:/account/orders";
-        } catch (IllegalArgumentException ex) {
-            ra.addFlashAttribute("error", ex.getMessage());
-            return "redirect:/cart";
-        }
     }
 }

@@ -13,6 +13,7 @@ public interface KhuyenMaiSanPhamRepository extends JpaRepository<KhuyenMaiSanPh
     List<KhuyenMaiSanPham> findByPromotion(SuKienKhuyenMai promotion);
     long deleteByPromotion(SuKienKhuyenMai promotion);
     boolean existsByPromotionAndProduct(SuKienKhuyenMai promotion, Product product);
+    boolean existsByProduct(Product product); // Check if any promotion links exist for a product (any promotion)
 
     // Max discount percent for a product across active promotions (status=1, today within range)
     @Query(value = "SELECT MAX(k.PhanTramGiam) FROM KhuyenMaiSanPham k\n" +

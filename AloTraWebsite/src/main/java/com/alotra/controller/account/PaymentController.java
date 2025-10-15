@@ -2,7 +2,7 @@ package com.alotra.controller.account;
 
 import com.alotra.entity.DonHang;
 import com.alotra.security.KhachHangUserDetails;
-import com.alotra.service.CustomerOrderService;
+import com.alotra.service.OrderService;
 import com.alotra.repository.DonHangRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,8 +20,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.math.BigDecimal;
 
 @Controller
@@ -32,9 +30,9 @@ public class PaymentController {
     private static final int EXPIRY_MINUTES = 30;
 
     private final DonHangRepository orderRepo;
-    private final CustomerOrderService customerOrderService;
+    private final OrderService customerOrderService;
 
-    public PaymentController(DonHangRepository orderRepo, CustomerOrderService customerOrderService) {
+    public PaymentController(DonHangRepository orderRepo, OrderService customerOrderService) {
         this.orderRepo = orderRepo;
         this.customerOrderService = customerOrderService;
     }
@@ -64,7 +62,7 @@ public class PaymentController {
         // Load order presentation rows
         var header = customerOrderService.getOrder(id);
         var items = customerOrderService.listOrderItems(id);
-        java.util.Map<Integer, java.util.List<CustomerOrderService.ItemToppingRow>> toppings = new java.util.HashMap<>();
+        java.util.Map<Integer, java.util.List<OrderService.ItemToppingRow>> toppings = new java.util.HashMap<>();
         for (var it : items) toppings.put(it.id, customerOrderService.listOrderItemToppings(it.id));
 
         String addInfo = "ALOTRA DH " + id;
@@ -110,56 +108,6 @@ public class PaymentController {
         m.put("paymentStatus", status);
         m.put("orderStatus", orderStatus);
         return m;
-    }
-
-    // Webhook endpoint (simulate bank callback). In production, secure with signature/allowlist.
-    @PostMapping("/webhook/msb")
-    public ResponseEntity<?> msbWebhook(@RequestBody Map<String, Object> payload) {
-        // Accept common variants in aggregator payloads
-        String account = pickAccount(payload);
-        String bankCode = String.valueOf(payload.getOrDefault("bankCode", ""));
-        String description = pickDescription(payload);
-        BigDecimal amount = parseAmount(payload.get("amount"));
-        if (amount == null) amount = parseAmount(payload.get("amt"));
-
-        if (account == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "missing account"));
-        }
-        // Compare digits only to tolerate formatting
-        String acctDigits = normalizeDigits(account);
-        String expectedDigits = normalizeDigits(ACCOUNT_NUMBER);
-        if (acctDigits == null || !acctDigits.equals(expectedDigits)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "account mismatch"));
-        }
-        if (description == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "description missing"));
-        }
-        Integer orderId = extractOrderId(description);
-        if (orderId == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "cannot extract order id"));
-        }
-        DonHang order = orderRepo.findById(orderId).orElse(null);
-        if (order == null) return ResponseEntity.notFound().build();
-        if (!isTransferMethod(order.getPaymentMethod())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "not a transfer order"));
-        }
-        if ("DaThanhToan".equals(order.getPaymentStatus())) {
-            return ResponseEntity.ok(Map.of("status", "ALREADY_PAID"));
-        }
-        if (amount == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "amount missing"));
-        }
-        BigDecimal expected = order.getTongThanhToan();
-        if (expected == null) expected = BigDecimal.ZERO;
-        BigDecimal expVnd = expected.setScale(0, BigDecimal.ROUND_HALF_UP);
-        BigDecimal paidVnd = amount.setScale(0, BigDecimal.ROUND_HALF_UP);
-        if (paidVnd.compareTo(expVnd) != 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "amount mismatch", "expected", expVnd, "paid", paidVnd));
-        }
-        order.setPaymentStatus("DaThanhToan");
-        order.setPaidAt(LocalDateTime.now());
-        orderRepo.save(order);
-        return ResponseEntity.ok(Map.of("status", "OK"));
     }
 
     // Admin-only helper for local testing: mark an order as paid (cash or transfer)
@@ -221,45 +169,5 @@ public class PaymentController {
     private String buildVietQrUrl(String bankCode, String accountNumber, int amount, String addInfo) {
         String info = URLEncoder.encode(addInfo, StandardCharsets.UTF_8);
         return "https://img.vietqr.io/image/" + bankCode + "-" + accountNumber + "-print.png?amount=" + amount + "&addInfo=" + info;
-    }
-
-    private Integer extractOrderId(String description) {
-        if (description == null) return null;
-        Pattern p = Pattern.compile("(?i).*?DH\\s+(\\d+).*"); // case-insensitive
-        Matcher m = p.matcher(description);
-        if (m.matches()) {
-            try { return Integer.valueOf(m.group(1)); } catch (NumberFormatException ignored) {}
-        }
-        return null;
-    }
-
-    private String normalizeDigits(Object v) {
-        if (v == null) return null;
-        String s = String.valueOf(v);
-        return s.replaceAll("[^0-9]", "");
-    }
-    private BigDecimal parseAmount(Object v) {
-        if (v == null) return null;
-        if (v instanceof Number n) return new BigDecimal(n.toString());
-        String digits = normalizeDigits(v);
-        if (digits == null || digits.isBlank()) return null;
-        try { return new BigDecimal(digits); } catch (Exception e) { return null; }
-    }
-
-    private String pickAccount(Map<String,Object> payload) {
-        Object[] keys = { "accountNumber", "toAccount", "toAccountNo", "benAccount", "accountNo" };
-        for (Object k : keys) {
-            Object val = payload.get(String.valueOf(k));
-            if (val != null && !String.valueOf(val).isBlank()) return String.valueOf(val);
-        }
-        return null;
-    }
-    private String pickDescription(Map<String,Object> payload) {
-        Object[] keys = { "description", "content", "addInfo", "orderInfo", "desc" };
-        for (Object k : keys) {
-            Object val = payload.get(String.valueOf(k));
-            if (val != null && !String.valueOf(val).isBlank()) return String.valueOf(val);
-        }
-        return null;
     }
 }

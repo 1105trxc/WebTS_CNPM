@@ -3,11 +3,11 @@ package com.alotra.controller.vendor;
 import com.alotra.entity.DonHang;
 import com.alotra.entity.NhanVien;
 import com.alotra.repository.DonHangRepository;
-import com.alotra.service.CustomerOrderService;
+import com.alotra.service.OrderService;
 import com.alotra.service.VendorOrderService;
-import com.alotra.service.CustomerOrderService.OrderItemRow;
-import com.alotra.service.CustomerOrderService.ItemToppingRow;
-import com.alotra.service.CustomerOrderService.OrderRow;
+import com.alotra.service.OrderService.OrderItemRow;
+import com.alotra.service.OrderService.ItemToppingRow;
+import com.alotra.service.OrderService.OrderRow;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,11 +24,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 @RequestMapping("/vendor")
 public class VendorController {
     private final VendorOrderService vendorOrderService;
-    private final CustomerOrderService customerOrderService;
+    private final OrderService customerOrderService;
     private final DonHangRepository donHangRepository;
 
     public VendorController(VendorOrderService vendorOrderService,
-                            CustomerOrderService customerOrderService,
+                            OrderService customerOrderService,
                             DonHangRepository donHangRepository) {
         this.vendorOrderService = vendorOrderService;
         this.customerOrderService = customerOrderService;

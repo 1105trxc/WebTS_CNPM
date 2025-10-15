@@ -29,17 +29,24 @@ public class AdminProductController {
     private final SizeSanPhamRepository sizeRepository;
     private final ProductVariantRepository variantRepository;
     private final CloudinaryService cloudinaryService;
+    // New: prevent delete when referenced
+    private final com.alotra.repository.KhuyenMaiSanPhamRepository promoLinkRepository;
+    private final com.alotra.repository.CTDonHangRepository orderLineRepository;
 
     public AdminProductController(ProductRepository productRepository,
                                   CategoryRepository categoryRepository,
                                   SizeSanPhamRepository sizeRepository,
                                   ProductVariantRepository variantRepository,
-                                  CloudinaryService cloudinaryService) {
+                                  CloudinaryService cloudinaryService,
+                                  com.alotra.repository.KhuyenMaiSanPhamRepository promoLinkRepository,
+                                  com.alotra.repository.CTDonHangRepository orderLineRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.sizeRepository = sizeRepository;
         this.variantRepository = variantRepository;
         this.cloudinaryService = cloudinaryService;
+        this.promoLinkRepository = promoLinkRepository;
+        this.orderLineRepository = orderLineRepository;
     }
 
     @GetMapping
@@ -179,11 +186,26 @@ public class AdminProductController {
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Integer id, RedirectAttributes ra) {
-        productRepository.findById(id).ifPresent(p -> {
-            p.setDeletedAt(LocalDateTime.now());
-            p.setStatus(0);
-            productRepository.save(p);
-        });
+        Optional<Product> opt = productRepository.findById(id);
+        if (opt.isEmpty()) {
+            ra.addFlashAttribute("error", "Không tìm thấy sản phẩm.");
+            return "redirect:/admin/products";
+        }
+        Product p = opt.get();
+
+        // 3) Used in order lines via variants?
+        long usedInOrders = 0L;
+        try {
+            usedInOrders = orderLineRepository.countByVariant_Product_Id(p.getId());
+        } catch (Exception ignored) { /* if method unavailable */ }
+        if (usedInOrders > 0) {
+            ra.addFlashAttribute("error", "Không thể xóa sản phẩm vì đã phát sinh đơn hàng.");
+            return "redirect:/admin/products";
+        }
+        // Passed all guards => soft delete
+        p.setDeletedAt(LocalDateTime.now());
+        p.setStatus(0);
+        productRepository.save(p);
         ra.addFlashAttribute("message", "Đã chuyển sản phẩm vào thùng rác.");
         return "redirect:/admin/products";
     }

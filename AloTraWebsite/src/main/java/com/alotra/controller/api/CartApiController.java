@@ -28,11 +28,7 @@ public class CartApiController {
         if (req.productId == null && req.variantId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Missing productId or variantId"));
         }
-        if (req.productId != null) {
-            cartService.addItem(kh, req.productId, null, qty, null);
-        } else {
-            cartService.addItemWithOptions(kh, req.variantId, qty, null, null);
-        }
+        cartService.addItemWithOptions(kh, req.variantId, qty, null, null);
         int count = cartService.getItemCount(kh);
         return ResponseEntity.ok(Map.of("ok", true, "count", count));
     }

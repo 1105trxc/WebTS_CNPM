@@ -2,7 +2,7 @@ package com.alotra.controller.account;
 
 import com.alotra.entity.KhachHang;
 import com.alotra.security.KhachHangUserDetails;
-import com.alotra.service.CustomerOrderService;
+import com.alotra.service.OrderService;
 import com.alotra.service.KhachHangService;
 import com.alotra.service.ReviewService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,12 +27,12 @@ import java.time.LocalDateTime;
 @RequestMapping("/account") // Tất cả URL sẽ có tiền tố /account
 public class AccountController {
 
-    private final CustomerOrderService orderService;
+    private final OrderService orderService;
     private final KhachHangService khachHangService;
     private final PasswordEncoder passwordEncoder;
     private final ReviewService reviewService; // new
 
-    public AccountController(CustomerOrderService orderService,
+    public AccountController(OrderService orderService,
                              KhachHangService khachHangService,
                              PasswordEncoder passwordEncoder,
                              ReviewService reviewService) {
@@ -126,7 +126,7 @@ public class AccountController {
                 LocalDateTime tmp = fromDt; fromDt = toDt; toDt = tmp;
             }
         }
-        List<CustomerOrderService.OrderRow> list = orderService.listOrdersByCustomer(current.getId(), status, orderId, fromDt, toDt);
+        List<OrderService.OrderRow> list = orderService.listOrdersByCustomer(current.getId(), status, orderId, fromDt, toDt);
         model.addAttribute("items", list);
         model.addAttribute("status", status);
         model.addAttribute("code", code);
@@ -148,7 +148,7 @@ public class AccountController {
         }
         var items = orderService.listOrderItems(id);
         // Build toppings map for each line item
-        Map<Integer, List<CustomerOrderService.ItemToppingRow>> toppings = new HashMap<>();
+        Map<Integer, List<OrderService.ItemToppingRow>> toppings = new HashMap<>();
         for (var it : items) {
             toppings.put(it.id, orderService.listOrderItemToppings(it.id));
         }

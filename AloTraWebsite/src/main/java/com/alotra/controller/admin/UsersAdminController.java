@@ -144,7 +144,7 @@ public class UsersAdminController {
     }
 
     @PostMapping("/employees/save")
-    public String saveEmployee(@ModelAttribute("nv") @Valid NhanVien nv, BindingResult result, Model model){
+    public String saveEmployee(@ModelAttribute("nv") @Valid NhanVien nv, BindingResult result, Model model, RedirectAttributes ra){
         // Validate unique username/email/phone
         NhanVien byU = nv.getUsername()!=null ? nvService.findByUsername(nv.getUsername()) : null;
         if (byU != null && (nv.getId()==null || !byU.getId().equals(nv.getId()))) {
@@ -176,6 +176,7 @@ public class UsersAdminController {
             return "admin/users/employee-form";
         }
         nvService.saveHandlingPassword(nv);
+        ra.addFlashAttribute("msg", isNew ? "Đã thêm nhân viên thành công." : "Đã cập nhật nhân viên thành công.");
         return "redirect:/admin/users?tab=employees";
     }
 

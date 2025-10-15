@@ -69,7 +69,7 @@ public class ReviewService {
         rv.setCreatedAt(LocalDateTime.now());
         reviewRepo.save(rv);
     }
-
+    
     @Transactional
     public DanhGia updateIfAllowed(KhachHang kh, Integer reviewId, int stars, String comment) {
         DanhGia r = reviewRepo.findById(reviewId).orElseThrow();
